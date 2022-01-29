@@ -3,7 +3,6 @@ import ErrorScene from './scenes/errorScene';
 import CycleScene from './scenes/cycleScene';
 import PreloadScene from './scenes/preloadScene';
 import StartScene from './scenes/startScene';
-import gameConfig from './config';
 
 const DEFAULT_WIDTH = 1280
 const DEFAULT_HEIGHT = 720
@@ -15,8 +14,8 @@ const config = {
         parent: 'phaser-game',
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: gameConfig.gameWidth,
-        height: gameConfig.gameHeight
+        width: DEFAULT_WIDTH,
+        height: DEFAULT_HEIGHT
     },
     scene: [PreloadScene, CycleScene, ErrorScene, StartScene],
     physics: {
