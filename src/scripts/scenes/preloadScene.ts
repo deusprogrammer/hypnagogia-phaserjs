@@ -1,3 +1,6 @@
+let urlParams = new URLSearchParams(window.location.search);
+let cycle = urlParams.get('cycle');
+
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PreloadScene' });
@@ -12,6 +15,11 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     create() {
-        this.scene.start('StartScene');
+        if (cycle === 'night') {
+            this.scene.start('NightCycleScene');
+        } else {
+            this.scene.start('DayCycleScene');
+        }
+        // this.scene.start('StartScene');
     }
 }

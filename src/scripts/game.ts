@@ -1,5 +1,6 @@
 import 'phaser'
-import MainScene from './scenes/dayCycleScene'
+import DayCycleScene from './scenes/dayCycleScene'
+import NightCycleScene from './scenes/nightCycleScene'
 import PreloadScene from './scenes/preloadScene'
 import StartScene from './scenes/startScene'
 
@@ -16,7 +17,7 @@ const config = {
         width: DEFAULT_WIDTH,
         height: DEFAULT_HEIGHT
     },
-    scene: [PreloadScene, MainScene, StartScene],
+    scene: [PreloadScene, DayCycleScene, NightCycleScene, StartScene],
     physics: {
         default: 'arcade',
         arcade: {

@@ -10,6 +10,8 @@ let directions = {
     right: 'right'
 }
 
+const VELOCITY = 500;
+
 class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
     direction;
 
@@ -32,11 +34,12 @@ class PlayerControlledSprite extends AbstractSprite {
     controls;
     pauseMenu;
     scene;
-    
+    movementCallback;
 
-    constructor(scene, x, y, texture) {
+    constructor(scene, x, y, texture, movementCallback) {
         super(scene, x, y, texture);
         this.scene = scene;
+        this.movementCallback = movementCallback;
         this.controls = {
             up: this.scene.input.keyboard.addKey('W'),
             down: this.scene.input.keyboard.addKey('S'),
@@ -52,23 +55,27 @@ class PlayerControlledSprite extends AbstractSprite {
         if (this.controls.down.isDown) {
             this.direction = directions.down;
             this.setVelocityX(0);
-            this.setVelocityY(100);
+            this.setVelocityY(VELOCITY);
             this.play('walk-down', true);
+            this.movementCallback(this);
         } else if (this.controls.up.isDown) {
             this.direction = directions.up;
             this.setVelocityX(0);
-            this.setVelocityY(-100);
+            this.setVelocityY(-VELOCITY);
             this.play('walk-up', true);
+            this.movementCallback(this);
         } else if (this.controls.right.isDown) {
             this.direction = directions.right;
-            this.setVelocityX(100);
+            this.setVelocityX(VELOCITY);
             this.setVelocityY(0);
             this.play('walk-right', true);
+            this.movementCallback(this);
         } else if (this.controls.left.isDown) {
             this.direction = directions.right;
-            this.setVelocityX(-100);
+            this.setVelocityX(-VELOCITY);
             this.setVelocityY(0);
             this.play('walk-left', true);
+            this.movementCallback(this);
         } else {
             this.setVelocityX(0);
             this.setVelocityY(0);
@@ -89,8 +96,8 @@ class PlayerControlledSprite extends AbstractSprite {
 }
 
 export class Player extends PlayerControlledSprite {
-    constructor(scene, x, y) {
-        super(scene, x, y, 'playerSprite');
+    constructor(scene, x, y, movementCallback) {
+        super(scene, x, y, 'playerSprite', movementCallback);
     }
 
     update() {
@@ -99,8 +106,8 @@ export class Player extends PlayerControlledSprite {
 }
 
 export class Mouse extends PlayerControlledSprite {
-    constructor(scene, x, y) {
-        super(scene, x, y, 'mouseSprite');
+    constructor(scene, x, y, movementCallback) {
+        super(scene, x, y, 'playerSprite', movementCallback);
     }
 
     update() {
@@ -114,9 +121,7 @@ class RemoteControlledSprite extends AbstractSprite {
         super(scene, x, y, texture);
     }
 
-    update() {
-        // TODO Figure out best way to control from websocket
-    }
+    update() {}
 }
 
 export class Cat extends RemoteControlledSprite {
@@ -131,7 +136,7 @@ export class Cat extends RemoteControlledSprite {
 
 export class Monster extends RemoteControlledSprite {
     constructor(scene, x, y) {
-        super(scene, x, y, 'monsterSprite');
+        super(scene, x, y, 'catSprite');
     }
 
     update() {
