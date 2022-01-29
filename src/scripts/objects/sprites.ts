@@ -41,7 +41,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         this.center = {x: 0, y: 0};
     }
 
-    update() {
+    update() : void {
         this.center.x = this.x + config.BLOCK_SIZE/2;
         this.center.y = this.y + config.BLOCK_SIZE/2;
 
@@ -49,12 +49,12 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         this.block.y = Math.floor(this.center.y / config.BLOCK_SIZE);
     }
 
-    adjustToCurrentBlock() {
+    adjustToCurrentBlock() : void {
         this.x = this.block.x * config.BLOCK_SIZE;
         this.y = this.block.y * config.BLOCK_SIZE;
     }
 
-    getFacingBlock() {
+    getFacingBlock() : Coord {
         let adjacentBlock = {x: 0, y: 0};
         if (this.direction == "up") {
             adjacentBlock.x = this.block.x;
@@ -73,7 +73,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         return adjacentBlock;
     }
 
-    findDeltaFromPassing() {
+    findDeltaFromPassing() : Coord {
         let idealBlock = {center: {x: 0, y: 0}};
         idealBlock.center.x = (this.block.x * config.BLOCK_SIZE) + config.BLOCK_SIZE/2;
         idealBlock.center.y = (this.block.y * config.BLOCK_SIZE) + config.BLOCK_SIZE/2;

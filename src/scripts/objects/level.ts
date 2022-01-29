@@ -38,7 +38,7 @@ export default class Level extends Phaser.GameObjects.GameObject {
 		}
 	}
 
-	getTile(x: number, y: number) {
+	getTile(x: number, y: number) : boolean {
 		return this.levelConfig.tilemap[y][x];
 	}
 
@@ -46,15 +46,15 @@ export default class Level extends Phaser.GameObjects.GameObject {
 		this.levelConfig.tilemap[y][x] = ' ';
 	}
 
-	isBlockPassable(x: number, y: number) {
+	isBlockPassable(x: number, y: number) : boolean {
 		return x >= 0 && y >= 0 && x < this.levelConfig.blocksX && y < this.levelConfig.blocksY && this.getTile(x, y) === ' ';
 	}
 
-	isBlockPassableAndNotBreakable(x: number, y: number) {
+	isBlockPassableAndNotBreakable(x: number, y: number) : boolean {
 		return x >= 0 && y >= 0 && x < this.levelConfig.blocksX && y < this.levelConfig.blocksY && this.getTile(x, y) !== '*';
 	}
 
-	isBlockBreakable(x: number, y: number) {
+	isBlockBreakable(x: number, y: number) : boolean {
 		return this.getTile(x, y) === '#';
 	}
 }
