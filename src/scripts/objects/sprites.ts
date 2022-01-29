@@ -1,7 +1,16 @@
 import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
 
+let directions = {
+    up: "up",
+    down: "down",
+    left: "left",
+    right: "right"
+}
+
 class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
+    direction;
+
     constructor(scene, x, y, texture) {
         super(scene, x, y, texture);
 
@@ -34,21 +43,25 @@ class PlayerControlledSprite extends AbstractSprite {
     update() {
         // Controls
         if (this.controls.down.isDown) {
+            this.direction = directions.down;
             this.setVelocityY(100);
             this.play("walk-down");
         } else if (this.controls.up.isDown) {
+            this.direction = directions.up;
             this.setVelocityY(-100);
             this.play("walk-up");
         } else if (this.controls.right.isDown) {
+            this.direction = directions.right;
             this.setVelocityX(100);
             this.play("walk-right");
         } else if (this.controls.left.isDown) {
+            this.direction = directions.right;
             this.setVelocityX(-100);
             this.play("walk-left");
         } else {
             this.setVelocityX(0);
             this.setVelocityY(0);
-            this.play("idle");
+            this.play(`idle-${this.direction}`);
         }
     }
 }
