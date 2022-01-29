@@ -1,8 +1,8 @@
-import 'phaser'
-import DayCycleScene from './scenes/dayCycleScene'
-import NightCycleScene from './scenes/nightCycleScene'
-import PreloadScene from './scenes/preloadScene'
-import StartScene from './scenes/startScene'
+import 'phaser';
+import ErrorScene from './scenes/errorScene';
+import CycleScene from './scenes/cycleScene';
+import PreloadScene from './scenes/preloadScene';
+import StartScene from './scenes/startScene';
 
 const DEFAULT_WIDTH = 1280
 const DEFAULT_HEIGHT = 720
@@ -17,7 +17,7 @@ const config = {
         width: DEFAULT_WIDTH,
         height: DEFAULT_HEIGHT
     },
-    scene: [PreloadScene, DayCycleScene, NightCycleScene, StartScene],
+    scene: [PreloadScene, CycleScene, ErrorScene, StartScene],
     physics: {
         default: 'arcade',
         arcade: {

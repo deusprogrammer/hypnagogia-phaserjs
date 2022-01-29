@@ -35,11 +35,13 @@ class PlayerControlledSprite extends AbstractSprite {
     pauseMenu;
     scene;
     movementCallback;
+    direction;
 
     constructor(scene, x, y, texture, movementCallback) {
         super(scene, x, y, texture);
         this.scene = scene;
         this.movementCallback = movementCallback;
+        this.direction = directions.down;
         this.controls = {
             up: this.scene.input.keyboard.addKey('W'),
             down: this.scene.input.keyboard.addKey('S'),
@@ -71,7 +73,7 @@ class PlayerControlledSprite extends AbstractSprite {
             this.play('walk-right', true);
             this.movementCallback(this);
         } else if (this.controls.left.isDown) {
-            this.direction = directions.right;
+            this.direction = directions.left;
             this.setVelocityX(-VELOCITY);
             this.setVelocityY(0);
             this.play('walk-left', true);
@@ -107,7 +109,7 @@ export class Player extends PlayerControlledSprite {
 
 export class Mouse extends PlayerControlledSprite {
     constructor(scene, x, y, movementCallback) {
-        super(scene, x, y, 'playerSprite', movementCallback);
+        super(scene, x, y, 'mouseSprite', movementCallback);
     }
 
     update() {
@@ -129,17 +131,13 @@ export class Cat extends RemoteControlledSprite {
         super(scene, x, y, 'catSprite');
     }
 
-    update() {
-        super.update();
-    }
+    update() {}
 }
 
 export class Monster extends RemoteControlledSprite {
     constructor(scene, x, y) {
-        super(scene, x, y, 'catSprite');
+        super(scene, x, y, 'monsterSprite');
     }
 
-    update() {
-        super.update();
-    }
+    update() {}
 }
