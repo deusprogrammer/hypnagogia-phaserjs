@@ -8,8 +8,11 @@ class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        createPlayerAnimation(this, texture, 3);
         this.setCollideWorldBounds(true);
+    }
+
+    create() {
+        createPlayerAnimation(this, this.texture, 3);
     }
 }
 
@@ -22,17 +25,19 @@ class PlayerControlledSprite extends AbstractSprite {
 
     constructor(scene, x, y, texture) {
         super(scene, x, y, texture);
+        this.setInteractive();
+    }
+
+    create() {
         this.controls = {
             up: this.scene.input.keyboard.addKey("W"),
             left: this.scene.input.keyboard.addKey("S"),
             down: this.scene.input.keyboard.addKey("A"),
             right: this.scene.input.keyboard.addKey("D")
         };
-        this.setInteractive();
     }
 
     update() {
-
         console.log("UPDATE");
 
         // Controls
@@ -52,7 +57,7 @@ class PlayerControlledSprite extends AbstractSprite {
             console.log("LEFT");
             this.setVelocityX(-100);
             this.play("walk-left");
-        } else if (this.controls.up.isUp && this.controls.down.isUp && this.controls.right.isUp && this.controls.left.isUp) {
+        } else {
             console.log("IDLE");
             this.setVelocityX(0);
             this.setVelocityY(0);
