@@ -16,6 +16,9 @@ export default class MainScene extends Phaser.Scene {
     }
 
     update() {
+        this.player.update();
+        this.cat.update();
+
         // On terminal condition
         if (this.state === "COMPLETE") {
             this.scene.start('NightCycleScene');
