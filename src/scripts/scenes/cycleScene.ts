@@ -5,8 +5,21 @@ import Level from '../objects/level';
 import levels from '../data/levels';
 import config from '../config';
 
-let urlParams = new URLSearchParams(window.location.search);
-let sessionId = urlParams.get('sessionId');
+let urlParams: URLSearchParams = new URLSearchParams(window.location.search);
+let sessionId: string = urlParams.get('sessionId') || '';
+
+type WSEvent = {
+    type: "UPDATE" | "CONNECT" | "READY",
+    sessionId: string,
+    player: "day" | "night",
+    playerData: {
+        x: number,
+        y: number,
+        direction: "UP" | "DOWN" | "LEFT" | "RIGHT",
+        currentAnimation: string,
+        state: "ALIVE" | "DEAD"
+    }
+}
 
 export default class CycleScene extends AbstractPausableScene {
     player: PlayerControlledSprite;
@@ -36,7 +49,7 @@ export default class CycleScene extends AbstractPausableScene {
         }));
     }
 
-    onRemoteMove({ playerData: { x, y, direction, currentAnimation } }) {
+    onRemoteMove({ playerData: { x, y, direction, currentAnimation } }: WSEvent) {
         this.remote.x = x;
         this.remote.y = y;
         this.remote.direction = direction;
@@ -74,7 +87,7 @@ export default class CycleScene extends AbstractPausableScene {
         this.level = new Level(this, levels.level1);
 
         let ws : WebSocket;
-        let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Falling Asleep...Sweet Dreams", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+        let text : Phaser.GameObjects.Text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Falling Asleep...Sweet Dreams", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
         text.setOrigin(0.5, 0.5);
         try {
             let interval;
@@ -89,7 +102,7 @@ export default class CycleScene extends AbstractPausableScene {
                         x: 0,
                         y: 0,
                         direction: 'DOWN',
-                        animation: 'IDLE',
+                        currentAnimation: 'IDLE',
                         state: 'ALIVE'
                     }
                 }));
@@ -103,7 +116,7 @@ export default class CycleScene extends AbstractPausableScene {
                             x: 0,
                             y: 0,
                             direction: 'DOWN',
-                            animation: 'IDLE',
+                            currentAnimation: 'IDLE',
                             state: 'ALIVE'
                         }
                     }));

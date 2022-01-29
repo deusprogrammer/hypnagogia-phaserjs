@@ -4,6 +4,7 @@ import { AbstractPausableScene } from '../scenes/abstractPausableScene';
 import CycleScene from '../scenes/cycleScene';
 import { StartUI } from './startUI';
 import config from '../config';
+import { Scene } from 'phaser';
 
 let directions = {
     up: 'up',
@@ -159,7 +160,7 @@ export class PlayerControlledSprite extends AbstractSprite {
 }
 
 export class Player extends PlayerControlledSprite {
-    constructor(scene, x, y, movementCallback) {
+    constructor(scene: CycleScene, x: number, y: number, movementCallback: CallbackFunction) {
         super(scene, x, y, 'playerSprite', movementCallback);
     }
 
@@ -169,7 +170,7 @@ export class Player extends PlayerControlledSprite {
 }
 
 export class Mouse extends PlayerControlledSprite {
-    constructor(scene, x, y, movementCallback) {
+    constructor(scene: CycleScene, x: number, y: number, movementCallback: CallbackFunction) {
         super(scene, x, y, 'mouseSprite', movementCallback);
     }
 
@@ -180,7 +181,7 @@ export class Mouse extends PlayerControlledSprite {
 
 // This sprite is controlled via websocket and is connected to the other player
 export class RemoteControlledSprite extends AbstractSprite {
-    constructor(scene, x, y, texture) {
+    constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
     }
 
@@ -190,7 +191,7 @@ export class RemoteControlledSprite extends AbstractSprite {
 }
 
 export class Cat extends RemoteControlledSprite {
-    constructor(scene, x, y) {
+    constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'catSprite');
     }
 
@@ -200,7 +201,7 @@ export class Cat extends RemoteControlledSprite {
 }
 
 export class Monster extends RemoteControlledSprite {
-    constructor(scene, x, y) {
+    constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'monsterSprite');
     }
 
