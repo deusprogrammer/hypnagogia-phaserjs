@@ -1,5 +1,7 @@
 import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
+import { AbstractPausableScene } from '../scenes/abstractPausableScene';
+import { StartUI } from './startUI';
 
 let directions = {
     up: 'up',
@@ -28,15 +30,20 @@ It's movements will be sent to other player via websocket.
 */
 class PlayerControlledSprite extends AbstractSprite {
     controls;
+    pauseMenu;
+    scene;
+    
 
     constructor(scene, x, y, texture) {
         super(scene, x, y, texture);
+        this.scene = scene;
         this.controls = {
             up: this.scene.input.keyboard.addKey('W'),
             down: this.scene.input.keyboard.addKey('S'),
             left: this.scene.input.keyboard.addKey('A'),
-            right: this.scene.input.keyboard.addKey('D')
+            right: this.scene.input.keyboard.addKey('D'),
         };
+        scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
         this.setInteractive();
     }
 
@@ -66,6 +73,17 @@ class PlayerControlledSprite extends AbstractSprite {
             this.setVelocityX(0);
             this.setVelocityY(0);
             this.play(`idle-${this.direction}`);
+        }
+    }
+
+    toggleUI() {
+        if(this.scene.isPaused) {
+            this.pauseMenu.disableUI();
+            this.scene.isPaused = false;
+        }
+        else {
+            this.pauseMenu = new StartUI(this.scene, 600, 300);
+            this.scene.isPaused = true;
         }
     }
 }
