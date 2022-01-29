@@ -3,7 +3,6 @@ import { w3cwebsocket as W3CWebSocket } from "websocket";
 import { AbstractPausableScene } from './abstractPausableScene';
 import Level from '../objects/level';
 import levels from '../data/levels';
-import config from '../config';
 
 let urlParams: URLSearchParams = new URLSearchParams(window.location.search);
 let sessionId: string = urlParams.get('sessionId') || '';

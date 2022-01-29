@@ -24,6 +24,10 @@ export default class Level extends Phaser.GameObjects.GameObject {
 				} else if (this.levelConfig.tilemap[y][x] == "#") {
 					let block = new PushableObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.breakableAsset);
 					this.moveable.add(block);
+					block.setDrag(2000, 2000);
+					this.scene.physics.add.collider(block, scene.player);
+					this.scene.physics.add.collider(block, scene.remote);
+					this.scene.physics.add.collider(block, this.blocks);
 				}
 			}
 		}
@@ -50,8 +54,11 @@ export default class Level extends Phaser.GameObjects.GameObject {
 	}
 
 	update() {
-		for (let block of [...this.blocks.children.entries, ...this.moveable.children.entries]) {
+		this.blocks.children.each((block) => {
 			block.update();
-		}
+		}, this);
+		this.moveable.children.each((block) => {
+			block.update();
+		}, this);
 	}
 }
