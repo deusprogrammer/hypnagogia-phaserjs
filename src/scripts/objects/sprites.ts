@@ -2,10 +2,10 @@ import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
 
 let directions = {
-    up: "up",
-    down: "down",
-    left: "left",
-    right: "right"
+    up: 'up',
+    down: 'down',
+    left: 'left',
+    right: 'right'
 }
 
 class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
@@ -32,10 +32,10 @@ class PlayerControlledSprite extends AbstractSprite {
     constructor(scene, x, y, texture) {
         super(scene, x, y, texture);
         this.controls = {
-            up: this.scene.input.keyboard.addKey("W"),
-            down: this.scene.input.keyboard.addKey("S"),
-            left: this.scene.input.keyboard.addKey("A"),
-            right: this.scene.input.keyboard.addKey("D")
+            up: this.scene.input.keyboard.addKey('W'),
+            down: this.scene.input.keyboard.addKey('S'),
+            left: this.scene.input.keyboard.addKey('A'),
+            right: this.scene.input.keyboard.addKey('D')
         };
         this.setInteractive();
     }
@@ -44,20 +44,24 @@ class PlayerControlledSprite extends AbstractSprite {
         // Controls
         if (this.controls.down.isDown) {
             this.direction = directions.down;
+            this.setVelocityX(0);
             this.setVelocityY(100);
-            this.play("walk-down");
+            this.play('walk-down', true);
         } else if (this.controls.up.isDown) {
             this.direction = directions.up;
+            this.setVelocityX(0);
             this.setVelocityY(-100);
-            this.play("walk-up");
+            this.play('walk-up', true);
         } else if (this.controls.right.isDown) {
             this.direction = directions.right;
             this.setVelocityX(100);
-            this.play("walk-right");
+            this.setVelocityY(0);
+            this.play('walk-right', true);
         } else if (this.controls.left.isDown) {
             this.direction = directions.right;
             this.setVelocityX(-100);
-            this.play("walk-left");
+            this.setVelocityY(0);
+            this.play('walk-left', true);
         } else {
             this.setVelocityX(0);
             this.setVelocityY(0);
