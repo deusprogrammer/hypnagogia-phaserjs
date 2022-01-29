@@ -13,7 +13,8 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.spritesheet('monsterSprite', 'assets/img/cat.png', { frameWidth: 48, frameHeight: 48 });
         this.load.image('button', 'assets/img/button.png');
         this.load.image('panel', 'assets/img/panel.png');
-
+        this.load.image('block', 'assets/img/block.png');
+        this.load.image('breakable', 'assets/img/breakable.png');
     }
 
     create() {

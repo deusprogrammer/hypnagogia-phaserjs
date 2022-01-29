@@ -1,4 +1,6 @@
-export let createPlayerAnimation = (sprite, texture, framesPerAnimation) => {
+import { AbstractSprite } from "../objects/sprites";
+
+export let createPlayerAnimation = (sprite: AbstractSprite, texture: string, framesPerAnimation: number) => {
     sprite.anims.create({
         key: 'walk-down',
         frames: sprite.anims.generateFrameNumbers(texture, { start: 0, end: framesPerAnimation - 1 }),

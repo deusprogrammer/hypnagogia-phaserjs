@@ -1,7 +1,9 @@
 import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
 import { AbstractPausableScene } from '../scenes/abstractPausableScene';
+import CycleScene from '../scenes/cycleScene';
 import { StartUI } from './startUI';
+import config from '../config';
 
 let directions = {
     up: 'up',
@@ -11,11 +13,16 @@ let directions = {
 }
 
 const VELOCITY = 500;
+type CallbackFunction = (player: PlayerControlledSprite) => void;
+type Coord = {x: number, y: number};
+type PlayerControls = {up: Phaser.Input.Keyboard.Key, down: Phaser.Input.Keyboard.Key, left: Phaser.Input.Keyboard.Key, right: Phaser.Input.Keyboard.Key,};
 
-class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
-    direction;
+export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
+    direction: string;
+    block: Coord;
+    center: Coord;
 
-    constructor(scene, x, y, texture) {
+    constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
 
         scene.add.existing(this);
@@ -23,6 +30,59 @@ class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
 
         createPlayerAnimation(this, texture, 3);
         this.setCollideWorldBounds(true);
+        this.body.checkCollision = {
+            none: true,
+            up: true,
+            down: true,
+            left: true,
+            right: true
+        };
+        this.block = {x: 0, y: 0};
+        this.center = {x: 0, y: 0};
+    }
+
+    update() {
+        this.center.x = this.x + config.BLOCK_SIZE/2;
+        this.center.y = this.y + config.BLOCK_SIZE/2;
+
+        this.block.x = Math.floor(this.center.x / config.BLOCK_SIZE);
+        this.block.y = Math.floor(this.center.y / config.BLOCK_SIZE);
+    }
+
+    adjustToCurrentBlock() {
+        this.x = this.block.x * config.BLOCK_SIZE;
+        this.y = this.block.y * config.BLOCK_SIZE;
+    }
+
+    getFacingBlock() {
+        let adjacentBlock = {x: 0, y: 0};
+        if (this.direction == "up") {
+            adjacentBlock.x = this.block.x;
+            adjacentBlock.y = this.block.y - 1;
+        } else if (this.direction == "down") {
+            adjacentBlock.x = this.block.x;
+            adjacentBlock.y = this.block.y + 1;
+        } else if (this.direction == "left") {
+            adjacentBlock.x = this.block.x - 1;
+            adjacentBlock.y = this.block.y;
+        } else if (this.direction == "right") {
+            adjacentBlock.x = this.block.x + 1;
+            adjacentBlock.y = this.block.y;
+        }
+
+        return adjacentBlock;
+    }
+
+    findDeltaFromPassing() {
+        let idealBlock = {center: {x: 0, y: 0}};
+        idealBlock.center.x = (this.block.x * config.BLOCK_SIZE) + config.BLOCK_SIZE/2;
+        idealBlock.center.y = (this.block.y * config.BLOCK_SIZE) + config.BLOCK_SIZE/2;
+
+        let delta = {x: 0, y: 0};
+        delta.x = Math.abs(this.center.x - idealBlock.center.x);
+        delta.y = Math.abs(this.center.y - idealBlock.center.y);
+
+        return delta;
     }
 }
 
@@ -30,14 +90,13 @@ class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
 This sprite is controlled directly by the player.  
 It's movements will be sent to other player via websocket.
 */
-class PlayerControlledSprite extends AbstractSprite {
-    controls;
+export class PlayerControlledSprite extends AbstractSprite {
     pauseMenu;
-    scene;
-    movementCallback;
-    direction;
+    controls: PlayerControls;
+    movementCallback: CallbackFunction;
+    direction: string;
 
-    constructor(scene, x, y, texture, movementCallback) {
+    constructor(scene: CycleScene, x: number, y: number, texture: string, movementCallback: CallbackFunction) {
         super(scene, x, y, texture);
         this.scene = scene;
         this.movementCallback = movementCallback;
@@ -48,11 +107,13 @@ class PlayerControlledSprite extends AbstractSprite {
             left: this.scene.input.keyboard.addKey('A'),
             right: this.scene.input.keyboard.addKey('D'),
         };
-        scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
+        // scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
         this.setInteractive();
     }
 
     update() {
+        super.update();
+
         // Controls
         if (this.controls.down.isDown) {
             this.direction = directions.down;
@@ -85,16 +146,16 @@ class PlayerControlledSprite extends AbstractSprite {
         }
     }
 
-    toggleUI() {
-        if(this.scene.isPaused) {
-            this.pauseMenu.disableUI();
-            this.scene.isPaused = false;
-        }
-        else {
-            this.pauseMenu = new StartUI(this.scene, 600, 300);
-            this.scene.isPaused = true;
-        }
-    }
+    // toggleUI() {
+    //     if(this.scene.isPaused) {
+    //         this.pauseMenu.disableUI();
+    //         this.scene.isPaused = false;
+    //     }
+    //     else {
+    //         this.pauseMenu = new StartUI(this.scene, 600, 300);
+    //         this.scene.isPaused = true;
+    //     }
+    // }
 }
 
 export class Player extends PlayerControlledSprite {
@@ -118,12 +179,14 @@ export class Mouse extends PlayerControlledSprite {
 }
 
 // This sprite is controlled via websocket and is connected to the other player
-class RemoteControlledSprite extends AbstractSprite {
+export class RemoteControlledSprite extends AbstractSprite {
     constructor(scene, x, y, texture) {
         super(scene, x, y, texture);
     }
 
-    update() {}
+    update() {
+        super.update();
+    }
 }
 
 export class Cat extends RemoteControlledSprite {
@@ -131,7 +194,9 @@ export class Cat extends RemoteControlledSprite {
         super(scene, x, y, 'catSprite');
     }
 
-    update() {}
+    update() {
+        super.update();
+    }
 }
 
 export class Monster extends RemoteControlledSprite {
@@ -139,5 +204,7 @@ export class Monster extends RemoteControlledSprite {
         super(scene, x, y, 'monsterSprite');
     }
 
-    update() {}
+    update() {
+        super.update();
+    }
 }

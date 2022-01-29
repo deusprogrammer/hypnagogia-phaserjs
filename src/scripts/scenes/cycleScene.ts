@@ -1,46 +1,66 @@
-import {Player, Cat, Mouse, Monster} from '../objects/sprites';
+import { Player, Cat, Mouse, Monster, RemoteControlledSprite, PlayerControlledSprite, AbstractSprite } from '../objects/sprites';
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import { AbstractPausableScene } from './abstractPausableScene';
+import Level from '../objects/level';
+import levels from '../data/levels';
+import config from '../config';
 
 let urlParams = new URLSearchParams(window.location.search);
 let sessionId = urlParams.get('sessionId');
 
 export default class CycleScene extends AbstractPausableScene {
-    state; 
-    player;
-    remote;
-    ws;
-    cycle;
+    player: PlayerControlledSprite;
+    remote: RemoteControlledSprite;
+    level: Level;
+    ws: WebSocket;
+    state: string;
+    cycle: string;
 
     constructor() {
         super({ key: 'CycleScene' });
         this.state = 'WAITING';
     }
 
-    init({cycle}) {
-        this.cycle = cycle;
-    }
-
-    onPlayerMove(player, ws) {
-        let {direction, x, y} = player;
+    onPlayerMove(player: PlayerControlledSprite, ws: WebSocket) {
+        let { direction, x, y } = player;
         ws.send(JSON.stringify({
             type: "UPDATE",
             sessionId,
             player: this.cycle,
             playerData: {
-                direction, 
-                x, 
-                y, 
+                direction,
+                x,
+                y,
                 currentAnimation: player.anims.currentAnim.key
             }
         }));
     }
 
-    onRemoteMove({playerData: {x, y, direction, currentAnimation}}) {
+    onRemoteMove({ playerData: { x, y, direction, currentAnimation } }) {
         this.remote.x = x;
         this.remote.y = y;
         this.remote.direction = direction;
         this.remote.play(currentAnimation, true);
+    }
+
+    adjustForCollisions(player: AbstractSprite, level: Level) {
+        let hitPlatform = this.physics.collide(player, level.blocks);
+        let adjacentBlock = player.getFacingBlock();
+
+        // Check for obstacle collision
+        if (hitPlatform && level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
+            let delta = player.findDeltaFromPassing();
+
+            let distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
+
+            if (distance <= config.ALLOWED_DISTANCE) {
+                player.adjustToCurrentBlock();
+            }
+        }
+    }
+
+    init({ cycle }) {
+        this.cycle = cycle;
     }
 
     create() {
@@ -48,8 +68,12 @@ export default class CycleScene extends AbstractPausableScene {
             this.cameras.main.setBackgroundColor('#FFFFFF');
         } else if (this.cycle === 'night') {
             this.cameras.main.setBackgroundColor('#000000');
+            this.cameras.main.zoom = 3.0;
         }
-        let ws;
+
+        this.level = new Level(this, levels.level1);
+
+        let ws : WebSocket;
         let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Falling Asleep...Sweet Dreams", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
         text.setOrigin(0.5, 0.5);
         try {
@@ -85,7 +109,7 @@ export default class CycleScene extends AbstractPausableScene {
                     }));
                 }, 10000);
             };
-            this.ws.onmessage = (message) => {
+            this.ws.onmessage = (message: MessageEvent) => {
                 let event = JSON.parse(message.data);
                 console.log("EVENT: " + JSON.stringify(event, null, 5));
                 switch (event.type) {
@@ -93,11 +117,12 @@ export default class CycleScene extends AbstractPausableScene {
                         console.log("OTHER PLAYER READY");
                         this.state = "PLAYING";
                         if (this.cycle === 'day') {
-                            this.player = new Player(this, 0, 0, (player) => {this.onPlayerMove(player, ws)});
+                            this.player = new Player(this, 0, 0, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Cat(this, 100, 100);
                         } else if (this.cycle === 'night') {
-                            this.player = new Mouse(this, 100, 100, (player) => {this.onPlayerMove(player, ws)});
+                            this.player = new Mouse(this, 100, 100, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Monster(this, 0, 0);
+                            this.cameras.main.startFollow(this.player);
                         }
                         text.destroy();
                         break;
@@ -109,16 +134,16 @@ export default class CycleScene extends AbstractPausableScene {
             this.ws.onclose = () => {
                 console.log("SOCKET CLOSED");
                 clearInterval(interval);
-                this.scene.start('ErrorScene', {errorMessage: "Socket closed"});
+                this.scene.start('ErrorScene', { errorMessage: "Socket closed" });
             }
-            this.ws.onerror = (errorMessage) => {
-                console.log("ERROR: " + errorMessage.data);
+            this.ws.onerror = () => {
+                console.log("ERROR");
                 clearInterval(interval);
-                this.scene.start('ErrorScene', {errorMessage: "Socket failure"});
+                this.scene.start('ErrorScene', { errorMessage: "Socket failure" });
             }
         } catch (errorMessage) {
             console.log("CAUGHT ERROR: " + errorMessage);
-            this.scene.start('ErrorScene', {errorMessage});
+            this.scene.start('ErrorScene', { errorMessage });
         }
     }
 
@@ -126,11 +151,15 @@ export default class CycleScene extends AbstractPausableScene {
         if (this.state === "PLAYING") {
             this.player.update();
             this.remote.update();
+            
+            this.adjustForCollisions(this.player, this.level);
+            this.adjustForCollisions(this.remote, this.level);
+
         } else if (this.state === 'COMPLETE') {
             if (this.cycle === 'day') {
-                this.scene.start('CycleScene', {cycle: 'night'});
+                this.scene.start('CycleScene', { cycle: 'night' });
             } else {
-                this.scene.start('CycleScene', {cycle: 'day'});
+                this.scene.start('CycleScene', { cycle: 'day' });
             }
         }
     }
