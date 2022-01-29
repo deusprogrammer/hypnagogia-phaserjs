@@ -56,22 +56,6 @@ export default class CycleScene extends AbstractPausableScene {
         this.remote.play(currentAnimation, true);
     }
 
-    adjustForCollisions(player: AbstractSprite, level: Level) {
-        let hitPlatform = this.physics.collide(player, level.blocks) || this.physics.collide(player, level.moveable);
-        let adjacentBlock = player.getFacingBlock();
-
-        // Check for obstacle collision
-        if (hitPlatform && level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
-            let delta = player.findDeltaFromPassing();
-
-            let distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
-
-            if (distance <= config.ALLOWED_DISTANCE) {
-                player.adjustToCurrentBlock();
-            }
-        }
-    }
-
     init({ cycle }) {
         this.cycle = cycle;
     }
@@ -82,8 +66,6 @@ export default class CycleScene extends AbstractPausableScene {
         } else if (this.cycle === 'night') {
             this.cameras.main.setBackgroundColor('#000000');
         }
-
-        this.level = new Level(this, levels.level1);
 
         let ws : WebSocket;
         let text : Phaser.GameObjects.Text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Falling Asleep...Sweet Dreams", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
@@ -137,6 +119,7 @@ export default class CycleScene extends AbstractPausableScene {
                             this.cameras.main.startFollow(this.player);
                             this.cameras.main.zoom = 3.0;
                         }
+                        this.level = new Level(this, levels.level1);
                         text.destroy();
                         break;
                     case 'UPDATE':
@@ -164,9 +147,7 @@ export default class CycleScene extends AbstractPausableScene {
         if (this.state === 'PLAYING') {
             this.player.update();
             this.remote.update();
-            
-            this.adjustForCollisions(this.player, this.level);
-            this.adjustForCollisions(this.remote, this.level);
+            this.level.update();
         } else if (this.state === 'COMPLETE') {
             if (this.cycle === 'day') {
                 this.scene.start('CycleScene', { cycle: 'night' });

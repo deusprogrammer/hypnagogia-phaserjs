@@ -2,6 +2,7 @@ import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
 import CycleScene from '../scenes/cycleScene';
 import config from '../config';
+import levels from '../data/levels';
 
 type CallbackFunction = (player: PlayerControlledSprite) => void;
 type Coord = {x: number, y: number};
@@ -28,8 +29,8 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        createPlayerAnimation(this, texture, 3);
         this.setCollideWorldBounds(true);
+        this.setOrigin(0,0);
         this.body.checkCollision = {
             none: false,
             up: true,
@@ -39,15 +40,33 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         };
         this.block = {x: 0, y: 0};
         this.center = {x: 0, y: 0};
-        this.setOrigin(0,0);
     }
 
-    update() : void {
+    update() {
         this.center.x = this.x + config.BLOCK_SIZE/2;
         this.center.y = this.y + config.BLOCK_SIZE/2;
 
         this.block.x = Math.floor(this.center.x / config.BLOCK_SIZE);
         this.block.y = Math.floor(this.center.y / config.BLOCK_SIZE);
+
+        this.adjustForCollisions();
+    }
+
+    adjustForCollisions() {
+        let scene = this.scene as CycleScene;
+        let hitPlatform = this.scene.physics.collide(this, scene.level.blocks) || scene.physics.collide(this, scene.level.moveable);
+        let adjacentBlock = this.getFacingBlock();
+
+        // Check for obstacle collision
+        if (hitPlatform && scene.level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
+            let delta = this.findDeltaFromPassing();
+
+            let distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
+
+            if (distance <= config.ALLOWED_DISTANCE) {
+                this.adjustToCurrentBlock();
+            }
+        }
     }
 
     adjustToCurrentBlock() : void {
@@ -94,11 +113,31 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
     }
 }
 
+export class PushableObject extends AbstractSprite {
+    constructor(scene: CycleScene, x: number, y: number, texture: string) {
+        super(scene, x, y, texture);
+    }
+}
+
+export class StaticObject extends AbstractSprite {
+    constructor(scene: CycleScene, x: number, y: number, texture: string) {
+        super(scene, x, y, texture);
+        this.body.pushable = false;
+    }
+}
+
+class AnimatedSprite extends AbstractSprite {
+    constructor(scene: CycleScene, x: number, y: number, texture: string) {
+        super(scene, x, y, texture);
+        createPlayerAnimation(this, texture, 3);
+    }
+}
+
 /* 
 This sprite is controlled directly by the player.  
 It's movements will be sent to other player via websocket.
 */
-export class PlayerControlledSprite extends AbstractSprite {
+export class PlayerControlledSprite extends AnimatedSprite {
     // pauseMenu;
     controls: PlayerControls;
     movementCallback: CallbackFunction;
@@ -187,7 +226,7 @@ export class Mouse extends PlayerControlledSprite {
 }
 
 // This sprite is controlled via websocket and is connected to the other player
-export class RemoteControlledSprite extends AbstractSprite {
+export class RemoteControlledSprite extends AnimatedSprite {
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
     }
