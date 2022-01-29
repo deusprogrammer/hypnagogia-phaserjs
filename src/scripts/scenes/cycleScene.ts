@@ -60,9 +60,6 @@ export default class CycleScene extends AbstractPausableScene {
         let hitPlatform = this.physics.collide(player, level.blocks) || this.physics.collide(player, level.moveable);
         let adjacentBlock = player.getFacingBlock();
 
-        // console.log("HIT PLATFORM: " + hitPlatform);
-        // console.log("IS PASSABLE:  " + level.isBlockPassable(adjacentBlock.x, adjacentBlock.y));
-
         // Check for obstacle collision
         if (hitPlatform && level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
             let delta = player.findDeltaFromPassing();
@@ -169,6 +166,7 @@ export default class CycleScene extends AbstractPausableScene {
             this.remote.update();
             
             this.adjustForCollisions(this.player, this.level);
+            this.adjustForCollisions(this.remote, this.level);
         } else if (this.state === 'COMPLETE') {
             if (this.cycle === 'day') {
                 this.scene.start('CycleScene', { cycle: 'night' });

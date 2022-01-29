@@ -31,7 +31,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         createPlayerAnimation(this, texture, 3);
         this.setCollideWorldBounds(true);
         this.body.checkCollision = {
-            none: true,
+            none: false,
             up: true,
             down: true,
             left: true,
