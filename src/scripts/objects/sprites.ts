@@ -1,27 +1,26 @@
 import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
-import { AbstractPausableScene } from '../scenes/abstractPausableScene';
 import CycleScene from '../scenes/cycleScene';
-import { StartUI } from './startUI';
 import config from '../config';
-import { Scene } from 'phaser';
 
-let directions = {
+type CallbackFunction = (player: PlayerControlledSprite) => void;
+type Coord = {x: number, y: number};
+type PlayerControls = {up: Phaser.Input.Keyboard.Key, down: Phaser.Input.Keyboard.Key, left: Phaser.Input.Keyboard.Key, right: Phaser.Input.Keyboard.Key,};
+
+const DIRECTIONS = {
     up: 'up',
     down: 'down',
     left: 'left',
     right: 'right'
 }
 
-const VELOCITY = 500;
-type CallbackFunction = (player: PlayerControlledSprite) => void;
-type Coord = {x: number, y: number};
-type PlayerControls = {up: Phaser.Input.Keyboard.Key, down: Phaser.Input.Keyboard.Key, left: Phaser.Input.Keyboard.Key, right: Phaser.Input.Keyboard.Key,};
+const VELOCITY: number = 500;
 
 export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
     direction: string;
     block: Coord;
     center: Coord;
+    adjacentBlock: Phaser.GameObjects.Rectangle;
 
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
@@ -40,6 +39,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         };
         this.block = {x: 0, y: 0};
         this.center = {x: 0, y: 0};
+        this.setOrigin(0,0);
     }
 
     update() : void {
@@ -56,7 +56,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
     }
 
     getFacingBlock() : Coord {
-        let adjacentBlock = {x: 0, y: 0};
+        let adjacentBlock : Coord = {x: 0, y: 0};
         if (this.direction == "up") {
             adjacentBlock.x = this.block.x;
             adjacentBlock.y = this.block.y - 1;
@@ -70,6 +70,13 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
             adjacentBlock.x = this.block.x + 1;
             adjacentBlock.y = this.block.y;
         }
+
+        if (this.adjacentBlock) {
+            this.adjacentBlock.destroy();
+        }
+        this.adjacentBlock = this.scene.add.rectangle(adjacentBlock.x * config.BLOCK_SIZE, adjacentBlock.y * config.BLOCK_SIZE, config.BLOCK_SIZE, config.BLOCK_SIZE);
+        this.adjacentBlock.setStrokeStyle(2, 0x1a65ac);
+        this.adjacentBlock.setOrigin(0, 0);
 
         return adjacentBlock;
     }
@@ -92,7 +99,7 @@ This sprite is controlled directly by the player.
 It's movements will be sent to other player via websocket.
 */
 export class PlayerControlledSprite extends AbstractSprite {
-    pauseMenu;
+    // pauseMenu;
     controls: PlayerControls;
     movementCallback: CallbackFunction;
     direction: string;
@@ -101,7 +108,7 @@ export class PlayerControlledSprite extends AbstractSprite {
         super(scene, x, y, texture);
         this.scene = scene;
         this.movementCallback = movementCallback;
-        this.direction = directions.down;
+        this.direction = DIRECTIONS.down;
         this.controls = {
             up: this.scene.input.keyboard.addKey('W'),
             down: this.scene.input.keyboard.addKey('S'),
@@ -117,25 +124,25 @@ export class PlayerControlledSprite extends AbstractSprite {
 
         // Controls
         if (this.controls.down.isDown) {
-            this.direction = directions.down;
+            this.direction = DIRECTIONS.down;
             this.setVelocityX(0);
             this.setVelocityY(VELOCITY);
             this.play('walk-down', true);
             this.movementCallback(this);
         } else if (this.controls.up.isDown) {
-            this.direction = directions.up;
+            this.direction = DIRECTIONS.up;
             this.setVelocityX(0);
             this.setVelocityY(-VELOCITY);
             this.play('walk-up', true);
             this.movementCallback(this);
         } else if (this.controls.right.isDown) {
-            this.direction = directions.right;
+            this.direction = DIRECTIONS.right;
             this.setVelocityX(VELOCITY);
             this.setVelocityY(0);
             this.play('walk-right', true);
             this.movementCallback(this);
         } else if (this.controls.left.isDown) {
-            this.direction = directions.left;
+            this.direction = DIRECTIONS.left;
             this.setVelocityX(-VELOCITY);
             this.setVelocityY(0);
             this.play('walk-left', true);

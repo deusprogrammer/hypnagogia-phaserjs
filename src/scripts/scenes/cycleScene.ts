@@ -37,7 +37,7 @@ export default class CycleScene extends AbstractPausableScene {
     onPlayerMove(player: PlayerControlledSprite, ws: WebSocket) {
         let { direction, x, y } = player;
         ws.send(JSON.stringify({
-            type: "UPDATE",
+            type: 'UPDATE',
             sessionId,
             player: this.cycle,
             playerData: {
@@ -57,8 +57,11 @@ export default class CycleScene extends AbstractPausableScene {
     }
 
     adjustForCollisions(player: AbstractSprite, level: Level) {
-        let hitPlatform = this.physics.collide(player, level.blocks);
+        let hitPlatform = this.physics.collide(player, level.blocks) || this.physics.collide(player, level.moveable);
         let adjacentBlock = player.getFacingBlock();
+
+        // console.log("HIT PLATFORM: " + hitPlatform);
+        // console.log("IS PASSABLE:  " + level.isBlockPassable(adjacentBlock.x, adjacentBlock.y));
 
         // Check for obstacle collision
         if (hitPlatform && level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
@@ -81,7 +84,6 @@ export default class CycleScene extends AbstractPausableScene {
             this.cameras.main.setBackgroundColor('#FFFFFF');
         } else if (this.cycle === 'night') {
             this.cameras.main.setBackgroundColor('#000000');
-            this.cameras.main.zoom = 3.0;
         }
 
         this.level = new Level(this, levels.level1);
@@ -93,7 +95,7 @@ export default class CycleScene extends AbstractPausableScene {
             let interval;
             ws = this.ws = new W3CWebSocket('ws://localhost:8081');
             this.ws.onopen = () => {
-                console.log("CONNECTED TO WEBSOCKET");
+                console.log('CONNECTED TO WEBSOCKET');
                 this.ws.send(JSON.stringify({
                     type: 'CONNECT',
                     sessionId,
@@ -124,11 +126,11 @@ export default class CycleScene extends AbstractPausableScene {
             };
             this.ws.onmessage = (message: MessageEvent) => {
                 let event : WSEvent = JSON.parse(message.data);
-                console.log("EVENT: " + JSON.stringify(event, null, 5));
+                console.log('EVENT: ' + JSON.stringify(event, null, 5));
                 switch (event.type) {
-                    case "READY":
-                        console.log("OTHER PLAYER READY");
-                        this.state = "PLAYING";
+                    case 'READY':
+                        console.log('OTHER PLAYER READY');
+                        this.state = 'PLAYING';
                         if (this.cycle === 'day') {
                             this.player = new Player(this, 0, 0, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Cat(this, 100, 100);
@@ -136,38 +138,37 @@ export default class CycleScene extends AbstractPausableScene {
                             this.player = new Mouse(this, 100, 100, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Monster(this, 0, 0);
                             this.cameras.main.startFollow(this.player);
+                            this.cameras.main.zoom = 3.0;
                         }
                         text.destroy();
                         break;
-                    case "UPDATE":
+                    case 'UPDATE':
                         this.onRemoteMove(event);
                         break;
                 }
             };
             this.ws.onclose = () => {
-                console.log("SOCKET CLOSED");
+                console.log('SOCKET CLOSED');
                 clearInterval(interval);
-                this.scene.start('ErrorScene', { errorMessage: "Socket closed" });
-            }
+                this.scene.start('ErrorScene', { errorMessage: 'Socket closed' });
+            };
             this.ws.onerror = () => {
-                console.log("ERROR");
+                console.log('ERROR');
                 clearInterval(interval);
-                this.scene.start('ErrorScene', { errorMessage: "Socket failure" });
-            }
+                this.scene.start('ErrorScene', { errorMessage: 'Socket failure' });
+            };
         } catch (errorMessage) {
-            console.log("CAUGHT ERROR: " + errorMessage);
+            console.log('CAUGHT ERROR: ' + errorMessage);
             this.scene.start('ErrorScene', { errorMessage });
         }
     }
 
     update() {
-        if (this.state === "PLAYING") {
+        if (this.state === 'PLAYING') {
             this.player.update();
             this.remote.update();
             
             this.adjustForCollisions(this.player, this.level);
-            this.adjustForCollisions(this.remote, this.level);
-
         } else if (this.state === 'COMPLETE') {
             if (this.cycle === 'day') {
                 this.scene.start('CycleScene', { cycle: 'night' });
