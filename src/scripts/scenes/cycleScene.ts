@@ -123,7 +123,7 @@ export default class CycleScene extends AbstractPausableScene {
                 }, 10000);
             };
             this.ws.onmessage = (message: MessageEvent) => {
-                let event = JSON.parse(message.data);
+                let event : WSEvent = JSON.parse(message.data);
                 console.log("EVENT: " + JSON.stringify(event, null, 5));
                 switch (event.type) {
                     case "READY":
