@@ -99,12 +99,12 @@ class MoveableObject extends AbstractSprite {
             adjacentBlock.y = this.block.y;
         }
 
-        if (this.adjacentBlock) {
-            this.adjacentBlock.destroy();
-        }
-        this.adjacentBlock = this.scene.add.rectangle(adjacentBlock.x * config.BLOCK_SIZE, adjacentBlock.y * config.BLOCK_SIZE, config.BLOCK_SIZE, config.BLOCK_SIZE);
-        this.adjacentBlock.setStrokeStyle(2, 0x1a65ac);
-        this.adjacentBlock.setOrigin(0, 0);
+        // if (this.adjacentBlock) {
+        //     this.adjacentBlock.destroy();
+        // }
+        // this.adjacentBlock = this.scene.add.rectangle(adjacentBlock.x * config.BLOCK_SIZE, adjacentBlock.y * config.BLOCK_SIZE, config.BLOCK_SIZE, config.BLOCK_SIZE);
+        // this.adjacentBlock.setStrokeStyle(2, 0x1a65ac);
+        // this.adjacentBlock.setOrigin(0, 0);
 
         return adjacentBlock;
     }
@@ -146,33 +146,6 @@ export class PushableObject extends MoveableObject {
 
     update() {
         super.update();
-
-        if (this.body.velocity.y > 0) {
-            this.direction = DIRECTIONS.up;
-        } else if (this.body.velocity.y < 0) {
-            this.direction = DIRECTIONS.down;
-        } else if (this.body.velocity.x < 0) {
-            this.direction = DIRECTIONS.right;
-        } else if (this.body.velocity.x > 0) {
-            this.direction = DIRECTIONS.left;
-        }
-    }
-
-    adjustForCollisions(): void {
-        let scene = this.scene as CycleScene;
-        let collided = this.scene.physics.collide(this, scene.level.blocks) || scene.physics.collide(this, scene.level.moveable);
-        let adjacentBlock = this.getFacingBlock();
-
-        // Check for obstacle collision
-        if (collided && scene.level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
-            let delta = this.findDeltaFromPassing();
-
-            let distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
-
-            if (distance <= config.ALLOWED_DISTANCE) {
-                this.adjustToCurrentBlock();
-            }
-        }
     }
 }
 
@@ -180,6 +153,7 @@ class AnimatedSprite extends MoveableObject {
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
         createPlayerAnimation(this, texture, 3);
+        //this.setBounce(0.1, 0.1);
     }
 
     update() {
@@ -209,6 +183,14 @@ export class PlayerControlledSprite extends AnimatedSprite {
         };
         // scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
         //this.setInteractive();
+    }
+
+    create() {
+        let scene : CycleScene = this.scene as CycleScene;
+        scene.physics.add.collider(this, scene.level.moveable, (sprite) => {
+            let moveable : MoveableObject = sprite as MoveableObject;
+            moveable.direction = this.direction;
+        })
     }
 
     update() {
