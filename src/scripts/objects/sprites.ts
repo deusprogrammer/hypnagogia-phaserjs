@@ -32,6 +32,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
         this.setOrigin(0,0);
         this.setBounce(0, 0);
+        this.setPushable(false);
         this.body.checkCollision = {
             none: false,
             up: true,
@@ -139,7 +140,6 @@ export class PushableObject extends MoveableObject {
 
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
-        this.setPushable(false);
     }
 
     update() {
@@ -212,11 +212,13 @@ It's movements will be sent to other player via websocket.
 export class PlayerControlledSprite extends AnimatedSprite {
     // pauseMenu;
     controls: PlayerControls;
+    isStopped: boolean;
     movementCallback: CallbackFunction;
 
     constructor(scene: CycleScene, x: number, y: number, texture: string, movementCallback: CallbackFunction) {
         super(scene, x, y, texture);
         this.scene = scene;
+        this.isStopped = false;
         this.movementCallback = movementCallback;
         this.controls = {
             up: this.scene.input.keyboard.addKey('W'),
@@ -237,29 +239,36 @@ export class PlayerControlledSprite extends AnimatedSprite {
             this.setVelocityY(VELOCITY);
             this.play('walk-down', true);
             this.movementCallback(this);
+            this.isStopped = false;
         } else if (this.controls.up.isDown) {
             this.direction = DIRECTIONS.up;
             this.setVelocityX(0);
             this.setVelocityY(-VELOCITY);
             this.play('walk-up', true);
             this.movementCallback(this);
+            this.isStopped = false;
         } else if (this.controls.right.isDown) {
             this.direction = DIRECTIONS.right;
             this.setVelocityX(VELOCITY);
             this.setVelocityY(0);
             this.play('walk-right', true);
             this.movementCallback(this);
+            this.isStopped = false;
         } else if (this.controls.left.isDown) {
             this.direction = DIRECTIONS.left;
             this.setVelocityX(-VELOCITY);
             this.setVelocityY(0);
             this.play('walk-left', true);
             this.movementCallback(this);
+            this.isStopped = false;
         } else {
             this.setVelocityX(0);
             this.setVelocityY(0);
             this.play(`idle-${this.direction}`);
-            this.movementCallback(this);
+            if (!this.isStopped) {
+                this.movementCallback(this);
+                this.isStopped = true;
+            }
         }
     }
 }
@@ -278,6 +287,8 @@ export class Player extends PlayerControlledSprite {
 export class Mouse extends PlayerControlledSprite {
     constructor(scene: CycleScene, x: number, y: number, movementCallback: CallbackFunction) {
         super(scene, x, y, 'mouseSprite', movementCallback);
+        this.tint = 0x555555;
+        this.scale = 0.75;
     }
 
     update() {
@@ -299,6 +310,7 @@ export class RemoteControlledSprite extends AnimatedSprite {
 export class Cat extends RemoteControlledSprite {
     constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'catSprite');
+        this.scale = 0.75;
     }
 
     update() {
@@ -309,6 +321,7 @@ export class Cat extends RemoteControlledSprite {
 export class Monster extends RemoteControlledSprite {
     constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'monsterSprite');
+        this.tint = 0x555555;
         scene.physics.add.collider(this, scene.level.moveable, onCollide);
     }
 
