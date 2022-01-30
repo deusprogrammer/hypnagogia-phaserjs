@@ -5,6 +5,8 @@ import Level from '../objects/level';
 import levels from '../data/levels';
 import config from '../config';
 
+const WS_ADDRESS = 'wss:/deusprogrammer.com/ws/hypnagogia';
+
 let urlParams: URLSearchParams = new URLSearchParams(window.location.search);
 let sessionId: string = urlParams.get('sessionId') || '';
 
@@ -33,6 +35,7 @@ export default class CycleScene extends AbstractPausableScene {
     state: string;
     cycle: string;
     levelId: string;
+    music: Phaser.Sound.BaseSound;
 
     constructor() {
         super({ key: 'CycleScene' });
@@ -63,8 +66,6 @@ export default class CycleScene extends AbstractPausableScene {
         this.remote.x = x;
         this.remote.y = y;
         this.remote.direction = direction;
-        this.remote.body.velocity.x = velocity.x;
-        this.remote.body.velocity.y = velocity.y;
         this.remote.play(currentAnimation, true);
     }
 
@@ -87,7 +88,7 @@ export default class CycleScene extends AbstractPausableScene {
         let ws : WebSocket;
         try {
             let interval;
-            ws = this.ws = new W3CWebSocket('wss://deusprogrammer.com/ws/hypnagogia');
+            ws = this.ws = new W3CWebSocket(WS_ADDRESS);
             this.ws.onopen = () => {
                 console.log('CONNECTED TO WEBSOCKET');
                 this.ws.send(JSON.stringify({
@@ -127,12 +128,17 @@ export default class CycleScene extends AbstractPausableScene {
                         this.state = 'PLAYING';
                         this.level = new Level(this, levels[this.levelId]);
                         if (this.cycle === 'day') {
+                            this.music = this.sound.add('day-music');
+                            this.music.play();
                             this.player = new Player(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Cat(this, levels.level1.player2Start.x * config.BLOCK_SIZE, levels.level1.player2Start.y * config.BLOCK_SIZE);
                             this.physics.add.collider(this.player, this.remote, () => {
                                 let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You got the key...\nbut night\nsnuffs out\nthe light of day.", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
                                 text.depth = 999;
                                 text.setOrigin(0.5, 0.5);
+                                this.cameras.main.zoomTo(1.0);
+                                this.cameras.main.stopFollow();
+                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
                                 setTimeout(() => {
                                     this.state = "COMPLETED";
                                 }, 5000);
@@ -141,11 +147,18 @@ export default class CycleScene extends AbstractPausableScene {
                                 let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You failed...\na night of terror awaits", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
                                 text.depth = 999;
                                 text.setOrigin(0.5, 0.5);
+                                this.cameras.main.zoomTo(1.0);
+                                this.cameras.main.stopFollow();
+                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
                                 setTimeout(() => {
                                     this.state = "FAILED";
                                 }, 5000);
                             });
+                            this.cameras.main.startFollow(this.player);
+                            this.cameras.main.zoom = 2.0;
                         } else if (this.cycle === 'night') {
+                            this.music = this.sound.add('night-music');
+                            this.music.play();
                             this.player = new Mouse(this, levels[this.levelId].player2Start.x * config.BLOCK_SIZE, levels[this.levelId].player2Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Monster(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE);
                             this.physics.add.collider(this.remote, this.player, () => {
@@ -171,7 +184,7 @@ export default class CycleScene extends AbstractPausableScene {
                                 }, 5000);
                             });
                             this.cameras.main.startFollow(this.player);
-                            this.cameras.main.zoom = 3.0;
+                            this.cameras.main.zoom = 4.0;
                         }
                         text.destroy();
                         break;
