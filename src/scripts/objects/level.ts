@@ -54,7 +54,7 @@ export default class Level extends Phaser.GameObjects.GameObject {
 					this.blocks.add(block);
 				}
 
-				block.depth = y * config.BLOCK_SIZE + 1;
+				block.depth = y * config.BLOCK_SIZE + 5;
 
 				if (scene.cycle === 'night') {
 					block.tint = this.levelConfig.nightTint;

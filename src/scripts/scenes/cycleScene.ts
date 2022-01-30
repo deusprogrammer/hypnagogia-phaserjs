@@ -24,6 +24,18 @@ type WSEvent = {
         },
         currentAnimation: string,
         state: "ALIVE" | "DEAD"
+    },
+    gameState: "YOU_LOST" | "YOU_WON" | "PLAYING"
+}
+
+const MESSAGES = {
+    night: {
+        win: 'You survived...but another day\nawaits...',
+        lose: 'The cold paw of death\nhas consumed you...'
+    },
+    day: {
+        win: 'You got the key...\nbut night\nsnuffs out\nthe light of day.',
+        lose: 'You failed...\na night of terror awaits...'
     }
 }
 
@@ -62,11 +74,46 @@ export default class CycleScene extends AbstractPausableScene {
         }));
     }
 
-    onRemoteMove({ playerData: { x, y, direction, currentAnimation, velocity } }: WSEvent) {
+    onRemoteMove({ playerData: { x, y, direction, currentAnimation, velocity }, gameState }: WSEvent) {
+        if (gameState === "YOU_LOST") {
+            this.onLose();
+        } else if (gameState === "YOU_WON") {
+            this.onWon();
+        }
         this.remote.x = x;
         this.remote.y = y;
         this.remote.direction = direction;
         this.remote.play(currentAnimation, true);
+    }
+
+    onLose() {
+        let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, MESSAGES[this.cycle].lose, { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+        text.depth = 999;
+        text.setOrigin(0.5, 0.5);
+        this.cameras.main.zoomTo(1.0);
+        this.cameras.main.stopFollow();
+        this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+        this.transition();
+    }
+
+    onWon() {
+        let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, MESSAGES[this.cycle].win, { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+        text.depth = 999;
+        text.setOrigin(0.5, 0.5);
+        this.cameras.main.zoomTo(1.0);
+        this.cameras.main.stopFollow();
+        this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+        this.transition();
+    }
+
+    transition() {
+        setTimeout(() => {
+            if (this.cycle === 'day') {
+                this.scene.start('DayToNightScene');
+            } else {
+                this.scene.start('NightToDayScene');
+            }
+        }, 5000);
     }
 
     init({ cycle }) {
@@ -132,17 +179,29 @@ export default class CycleScene extends AbstractPausableScene {
                             this.music.play();
                             this.player = new Player(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Cat(this, levels.level1.player2Start.x * config.BLOCK_SIZE, levels.level1.player2Start.y * config.BLOCK_SIZE);
+                            
+                            // Day time win
                             this.physics.add.collider(this.player, this.remote, () => {
-                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You got the key...\nbut night\nsnuffs out\nthe light of day.", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
-                                text.depth = 999;
-                                text.setOrigin(0.5, 0.5);
-                                this.cameras.main.zoomTo(1.0);
-                                this.cameras.main.stopFollow();
-                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
-                                setTimeout(() => {
-                                    this.state = "COMPLETED";
-                                }, 5000);
+                                this.onWon();
+                                ws.send(JSON.stringify({
+                                    type: 'UPDATE',
+                                    sessionId,
+                                    player: this.cycle,
+                                    playerData: {
+                                        direction: this.player.direction,
+                                        x: this.player.x,
+                                        y: this.player.y,
+                                        velocity: {
+                                            x: this.player.body.velocity.x,
+                                            y: this.player.body.velocity.y
+                                        },
+                                        currentAnimation: this.player.anims.currentAnim.key,
+                                    },
+                                    gameState: "YOU_LOST"
+                                }));
                             });
+
+                            // Day time lose
                             this.physics.add.collider(this.remote, this.level.exit, () => {
                                 let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You failed...\na night of terror awaits", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
                                 text.depth = 999;
@@ -150,8 +209,24 @@ export default class CycleScene extends AbstractPausableScene {
                                 this.cameras.main.zoomTo(1.0);
                                 this.cameras.main.stopFollow();
                                 this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+                                ws.send(JSON.stringify({
+                                    type: 'UPDATE',
+                                    sessionId,
+                                    player: this.cycle,
+                                    playerData: {
+                                        direction: this.player.direction,
+                                        x: this.player.x,
+                                        y: this.player.y,
+                                        velocity: {
+                                            x: this.player.body.velocity.x,
+                                            y: this.player.body.velocity.y
+                                        },
+                                        currentAnimation: this.player.anims.currentAnim.key,
+                                    },
+                                    gameState: "YOU_WON"
+                                }));
                                 setTimeout(() => {
-                                    this.state = "FAILED";
+                                    this.scene.start('DayToNightScene');
                                 }, 5000);
                             });
                             this.cameras.main.startFollow(this.player);
@@ -161,17 +236,29 @@ export default class CycleScene extends AbstractPausableScene {
                             this.music.play();
                             this.player = new Mouse(this, levels[this.levelId].player2Start.x * config.BLOCK_SIZE, levels[this.levelId].player2Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Monster(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE);
+                            
+                            // Night time lose
                             this.physics.add.collider(this.remote, this.player, () => {
-                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You were consumed\nby the darkness...\nmorning comes.", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
-                                text.depth = 999;
-                                text.setOrigin(0.5, 0.5);
-                                this.cameras.main.zoomTo(1.0);
-                                this.cameras.main.stopFollow();
-                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
-                                setTimeout(() => {
-                                    this.state = "FAILED";
-                                }, 5000);
+                                this.onWon();
+                                ws.send(JSON.stringify({
+                                    type: 'UPDATE',
+                                    sessionId,
+                                    player: this.cycle,
+                                    playerData: {
+                                        direction: this.player.direction,
+                                        x: this.player.x,
+                                        y: this.player.y,
+                                        velocity: {
+                                            x: this.player.body.velocity.x,
+                                            y: this.player.body.velocity.y
+                                        },
+                                        currentAnimation: this.player.anims.currentAnim.key,
+                                    },
+                                    gameState: "YOU_WON"
+                                }));
                             });
+
+                            // Night time win
                             this.physics.add.collider(this.player, this.level.exit, () => {
                                 let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You escaped the room, \nbut tomorrow \nbrings more of the same!", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
                                 text.depth = 999;
@@ -179,8 +266,24 @@ export default class CycleScene extends AbstractPausableScene {
                                 this.cameras.main.zoomTo(1.0);
                                 this.cameras.main.stopFollow();
                                 this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+                                ws.send(JSON.stringify({
+                                    type: 'UPDATE',
+                                    sessionId,
+                                    player: this.cycle,
+                                    playerData: {
+                                        direction: this.player.direction,
+                                        x: this.player.x,
+                                        y: this.player.y,
+                                        velocity: {
+                                            x: this.player.body.velocity.x,
+                                            y: this.player.body.velocity.y
+                                        },
+                                        currentAnimation: this.player.anims.currentAnim.key,
+                                    },
+                                    gameState: "YOU_LOST"
+                                }));
                                 setTimeout(() => {
-                                    this.state = "COMPLETED";
+                                    this.scene.start('NightToDayScene');
                                 }, 5000);
                             });
                             this.cameras.main.startFollow(this.player);
@@ -214,12 +317,6 @@ export default class CycleScene extends AbstractPausableScene {
             this.player.update();
             this.remote.update();
             this.level.update();
-        } else if (this.state === 'COMPLETE' || this.state === 'FAIL') {
-            if (this.cycle === 'day') {
-                this.scene.start('CycleScene', { cycle: 'night' });
-            } else {
-                this.scene.start('CycleScene', { cycle: 'day' });
-            }
         }
     }
 }
