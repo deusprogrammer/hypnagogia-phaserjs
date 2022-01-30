@@ -4,6 +4,7 @@ import { AbstractPausableScene } from './abstractPausableScene';
 import Level from '../objects/level';
 import levels from '../data/levels';
 import config from '../config';
+import UIScene from './uiScene';
 
 const WS_ADDRESS = 'wss:/deusprogrammer.com/ws/hypnagogia';
 
@@ -30,12 +31,14 @@ type WSEvent = {
 
 const MESSAGES = {
     night: {
-        win: 'You survived...but another day\nawaits...',
-        lose: 'The cold paw of death\nhas consumed you...'
+        win: 'You survived...\ntomorrow a new day awaits\nawaits...',
+        lose: 'The cold paw of death\nhas consumed you...',
+        time: 'The morning sun...\nbreaks through the dark...\nbut the same morning awaits.'
     },
     day: {
         win: 'You got the key...\nbut night\nsnuffs out\nthe light of day.',
-        lose: 'You failed...\na night of terror awaits...'
+        lose: 'You failed...\na night of terror awaits...',
+        time: 'You are out of time...\nnight draws near...'
     }
 }
 
@@ -49,10 +52,16 @@ export default class CycleScene extends AbstractPausableScene {
     levelId: string;
     music: Phaser.Sound.BaseSound;
 
+    uiScene: UIScene;
+    timerInterval: NodeJS.Timer;
+    timeRemaining: number;
+    timerElement: Phaser.GameObjects.Text;
+
     constructor() {
         super({ key: 'CycleScene' });
         this.state = 'WAITING';
         this.levelId = 'level1';
+        this.timeRemaining = 30;
     }
 
     onPlayerMove(player: PlayerControlledSprite, ws: WebSocket) {
@@ -93,6 +102,7 @@ export default class CycleScene extends AbstractPausableScene {
         this.cameras.main.zoomTo(1.0);
         this.cameras.main.stopFollow();
         this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+        clearInterval(this.timerInterval);
         this.transition();
     }
 
@@ -103,6 +113,18 @@ export default class CycleScene extends AbstractPausableScene {
         this.cameras.main.zoomTo(1.0);
         this.cameras.main.stopFollow();
         this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+        clearInterval(this.timerInterval);
+        this.transition();
+    }
+
+    onTimeout() {
+        let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, MESSAGES[this.cycle].time, { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+        text.depth = 999;
+        text.setOrigin(0.5, 0.5);
+        this.cameras.main.zoomTo(1.0);
+        this.cameras.main.stopFollow();
+        this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+        clearInterval(this.timerInterval);
         this.transition();
     }
 
@@ -174,6 +196,12 @@ export default class CycleScene extends AbstractPausableScene {
                         console.log('OTHER PLAYER READY');
                         this.state = 'PLAYING';
                         this.level = new Level(this, levels[this.levelId]);
+
+                        // Create timer element
+                        this.scene.launch('UIScene', {timeRemaining: this.timeRemaining, cycle: this.cycle, onTimeout: () => {
+                            this.onTimeout();
+                        }});
+
                         if (this.cycle === 'day') {
                             this.music = this.sound.add('day-music');
                             this.music.play();

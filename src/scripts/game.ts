@@ -3,6 +3,9 @@ import ErrorScene from './scenes/errorScene';
 import CycleScene from './scenes/cycleScene';
 import PreloadScene from './scenes/preloadScene';
 import StartScene from './scenes/startScene';
+import DayToNightScene from './scenes/dayToNightScene';
+import NightToDayScene from './scenes/nightToDayScene';
+import UIScene from './scenes/uiScene';
 
 const DEFAULT_WIDTH = 1280
 const DEFAULT_HEIGHT = 720
@@ -17,7 +20,7 @@ const config = {
         width: DEFAULT_WIDTH,
         height: DEFAULT_HEIGHT
     },
-    scene: [PreloadScene, CycleScene, ErrorScene, StartScene],
+    scene: [PreloadScene, CycleScene, ErrorScene, StartScene, DayToNightScene, NightToDayScene, UIScene],
     physics: {
         default: 'arcade',
         arcade: {
