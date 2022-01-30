@@ -28,8 +28,8 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        this.setOrigin(0,0);
         this.setCollideWorldBounds(true);
+        this.setOrigin(0,0);
         this.setBounce(0, 0);
         this.body.checkCollision = {
             none: false,
@@ -56,6 +56,8 @@ class MoveableObject extends AbstractSprite {
 
         this.block.x = Math.floor(this.center.x / config.BLOCK_SIZE);
         this.block.y = Math.floor(this.center.y / config.BLOCK_SIZE);
+
+        this.depth = this.block.y;
 
         this.adjustForCollisions();
     }
@@ -153,7 +155,6 @@ class AnimatedSprite extends MoveableObject {
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
         createPlayerAnimation(this, texture, 3);
-        //this.setBounce(0.1, 0.1);
     }
 
     update() {
@@ -183,14 +184,10 @@ export class PlayerControlledSprite extends AnimatedSprite {
         };
         // scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
         //this.setInteractive();
-    }
-
-    create() {
-        let scene : CycleScene = this.scene as CycleScene;
-        // scene.physics.add.collider(this, scene.level.moveable, (sprite) => {
-        //     let moveable : MoveableObject = sprite as MoveableObject;
-        //     moveable.direction = this.direction;
-        // })
+        scene.physics.add.collider(this, scene.level.moveable, (obj1, obj2) => {
+            let moveable : MoveableObject = obj2 as MoveableObject;
+            moveable.direction = this.direction;
+        })
     }
 
     update() {
@@ -225,6 +222,7 @@ export class PlayerControlledSprite extends AnimatedSprite {
             this.setVelocityX(0);
             this.setVelocityY(0);
             this.play(`idle-${this.direction}`);
+            this.movementCallback(this);
         }
     }
 
@@ -253,6 +251,27 @@ export class Player extends PlayerControlledSprite {
 export class Mouse extends PlayerControlledSprite {
     constructor(scene: CycleScene, x: number, y: number, movementCallback: CallbackFunction) {
         super(scene, x, y, 'mouseSprite', movementCallback);
+        scene.physics.add.collider(this, scene.level.moveable, 
+            (obj1, obj2) => {
+                console.log("MOUSE COLLISION");
+                let player : Player = obj1 as Player;
+                let moveable : MoveableObject = obj2 as MoveableObject;
+                switch(player.direction) {
+                    case DIRECTIONS.down:
+                    case DIRECTIONS.up:
+                        moveable.setVelocityY(0);
+                        player.setVelocityY(0);
+                        break;
+                    case DIRECTIONS.right:
+                    case DIRECTIONS.left:
+                        moveable.setVelocityX(0);
+                        player.setVelocityX(0);
+                        break;
+                }
+            }, (sprite) => {
+                return true;
+            }, this
+        );
     }
 
     update() {
@@ -274,6 +293,14 @@ export class RemoteControlledSprite extends AnimatedSprite {
 export class Cat extends RemoteControlledSprite {
     constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'catSprite');
+        scene.physics.add.collider(this, scene.level.moveable, 
+            (obj1, obj2) => {
+                console.log("CAT COLLISION");
+                let remote : RemoteControlledSprite = obj1 as RemoteControlledSprite;
+                let moveable : MoveableObject = obj2 as MoveableObject;
+                remote.adjustToCurrentBlock();
+            }
+        );
     }
 
     update() {
@@ -284,6 +311,30 @@ export class Cat extends RemoteControlledSprite {
 export class Monster extends RemoteControlledSprite {
     constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'monsterSprite');
+        scene.physics.add.collider(this, scene.level.moveable, 
+            (obj1, obj2) => {
+                console.log("MONSTER COLLISION");
+                // let remote : RemoteControlledSprite = obj1 as RemoteControlledSprite;
+                // let moveable : MoveableObject = obj2 as MoveableObject;
+
+                // switch(remote.direction) {
+                //     case DIRECTIONS.down:
+                //         moveable.y = remote.y + config.BLOCK_SIZE;
+                //         break;
+                //     case DIRECTIONS.up:
+                //         moveable.y = remote.y - config.BLOCK_SIZE;
+                //         break;
+                //     case DIRECTIONS.right:
+                //         moveable.x = remote.x + config.BLOCK_SIZE;
+                //         break;
+                //     case DIRECTIONS.left:
+                //         moveable.x = remote.x - config.BLOCK_SIZE;
+                //         break;
+                // }
+            }, (sprite) => {
+                return true;
+            }
+        );
     }
 
     update() {

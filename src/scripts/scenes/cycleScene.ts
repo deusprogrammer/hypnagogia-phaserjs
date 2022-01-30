@@ -16,6 +16,10 @@ type WSEvent = {
         x: number,
         y: number,
         direction: "UP" | "DOWN" | "LEFT" | "RIGHT",
+        velocity: {
+            x: number,
+            y: number
+        },
         currentAnimation: string,
         state: "ALIVE" | "DEAD"
     }
@@ -37,7 +41,7 @@ export default class CycleScene extends AbstractPausableScene {
     }
 
     onPlayerMove(player: PlayerControlledSprite, ws: WebSocket) {
-        let { direction, x, y } = player;
+        let { direction, x, y, body: {velocity: {x: velocityX, y: velocityY}} } = player;
         ws.send(JSON.stringify({
             type: 'UPDATE',
             sessionId,
@@ -46,15 +50,21 @@ export default class CycleScene extends AbstractPausableScene {
                 direction,
                 x,
                 y,
+                velocity: {
+                    x: velocityX,
+                    y: velocityY
+                },
                 currentAnimation: player.anims.currentAnim.key
             }
         }));
     }
 
-    onRemoteMove({ playerData: { x, y, direction, currentAnimation } }: WSEvent) {
+    onRemoteMove({ playerData: { x, y, direction, currentAnimation, velocity } }: WSEvent) {
         this.remote.x = x;
         this.remote.y = y;
         this.remote.direction = direction;
+        this.remote.body.velocity.x = velocity.x;
+        this.remote.body.velocity.y = velocity.y;
         this.remote.play(currentAnimation, true);
     }
 
@@ -110,12 +120,12 @@ export default class CycleScene extends AbstractPausableScene {
             };
             this.ws.onmessage = (message: MessageEvent) => {
                 let event : WSEvent = JSON.parse(message.data);
-                console.log('EVENT: ' + JSON.stringify(event, null, 5));
                 this.game.scale.setGameSize(levels[this.levelId].blocksX * config.BLOCK_SIZE, levels[this.levelId].blocksY * config.BLOCK_SIZE);
                 switch (event.type) {
                     case 'READY':
                         console.log('OTHER PLAYER READY');
                         this.state = 'PLAYING';
+                        this.level = new Level(this, levels[this.levelId]);
                         if (this.cycle === 'day') {
                             this.player = new Player(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Cat(this, levels.level1.player2Start.x * config.BLOCK_SIZE, levels.level1.player2Start.y * config.BLOCK_SIZE);
@@ -125,7 +135,6 @@ export default class CycleScene extends AbstractPausableScene {
                             this.cameras.main.startFollow(this.player);
                             this.cameras.main.zoom = 3.0;
                         }
-                        this.level = new Level(this, levels.level1);
                         text.destroy();
                         break;
                     case 'UPDATE':

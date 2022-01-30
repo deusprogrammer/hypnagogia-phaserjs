@@ -13,6 +13,8 @@ export default class Level extends Phaser.GameObjects.GameObject {
 		super(scene, 'level');
 		this.levelConfig = levelConfig;
 
+		scene.add.existing(this);
+
 		this.blocks = this.scene.physics.add.group();
 		this.moveable = this.scene.physics.add.group();
 
@@ -20,9 +22,11 @@ export default class Level extends Phaser.GameObjects.GameObject {
 			for (let x = 0; x < this.levelConfig.blocksX; x++) {
 				if (this.levelConfig.tilemap[y][x] == "*") {
 					let block = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.blockAsset);
+					block.depth = y * config.BLOCK_SIZE;
 					this.blocks.add(block);
 				} else if (this.levelConfig.tilemap[y][x] == "#") {
 					let block = new PushableObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.breakableAsset);
+					block.depth = y * config.BLOCK_SIZE;
 					this.moveable.add(block);
 					block.setDrag(2000, 2000);
 					this.scene.physics.add.collider(block, this.blocks);
@@ -49,6 +53,14 @@ export default class Level extends Phaser.GameObjects.GameObject {
 
 	isBlockBreakable(x: number, y: number) : boolean {
 		return this.getTile(x, y) === '#';
+	}
+
+	bringToTop() {
+		this.blocks.children.each((block) => {
+		}, this);
+		this.moveable.children.each((block) => {
+			block.update();
+		}, this);
 	}
 
 	update() {
