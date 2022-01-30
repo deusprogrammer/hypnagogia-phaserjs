@@ -87,7 +87,7 @@ export default class CycleScene extends AbstractPausableScene {
         let ws : WebSocket;
         try {
             let interval;
-            ws = this.ws = new W3CWebSocket('ws://localhost:8081');
+            ws = this.ws = new W3CWebSocket('wss://deusprogrammer.com/ws/hypnagogia');
             this.ws.onopen = () => {
                 console.log('CONNECTED TO WEBSOCKET');
                 this.ws.send(JSON.stringify({
