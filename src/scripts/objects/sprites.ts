@@ -21,6 +21,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
     block: Coord;
     center: Coord;
     adjacentBlock: Phaser.GameObjects.Rectangle;
+    fixed: Coord;
 
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
@@ -41,9 +42,11 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
         this.direction = DIRECTIONS.left;
         this.block = {x: 0, y: 0};
         this.center = {x: 0, y: 0};
+        this.fixed = {x, y};
     }
 }
 
+const SPEED = 2;
 class MoveableObject extends AbstractSprite {
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
@@ -51,6 +54,7 @@ class MoveableObject extends AbstractSprite {
     }
 
     update() {
+        this.fixed = {x: this.x, y: this.y};
         this.center.x = this.x + config.BLOCK_SIZE/2;
         this.center.y = this.y + config.BLOCK_SIZE/2;
 
@@ -101,13 +105,6 @@ class MoveableObject extends AbstractSprite {
             adjacentBlock.y = this.block.y;
         }
 
-        // if (this.adjacentBlock) {
-        //     this.adjacentBlock.destroy();
-        // }
-        // this.adjacentBlock = this.scene.add.rectangle(adjacentBlock.x * config.BLOCK_SIZE, adjacentBlock.y * config.BLOCK_SIZE, config.BLOCK_SIZE, config.BLOCK_SIZE);
-        // this.adjacentBlock.setStrokeStyle(2, 0x1a65ac);
-        // this.adjacentBlock.setOrigin(0, 0);
-
         return adjacentBlock;
     }
 
@@ -136,19 +133,65 @@ export class StaticObject extends AbstractSprite {
 }
 
 export class PushableObject extends MoveableObject {
+    isMoving: boolean;
+    movingDirection: number;
+    targetCoords;
+
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
-        this.setPushable(true);
-    }
-
-    create() {
-        let scene : CycleScene = this.scene as CycleScene;
-        scene.physics.add.collider(this, scene.level.blocks);
+        this.setPushable(false);
     }
 
     update() {
         super.update();
+        if (this.isMoving) {
+            if (this.targetCoords.x) {
+                this.x += this.movingDirection * SPEED;
+                console.log("MOVING");
+                if (
+                    (this.movingDirection > 0 && this.x >= this.targetCoords.x) || 
+                    (this.movingDirection < 0 && this.x <= this.targetCoords.x )) {
+                        this.x = this.targetCoords.x;
+                        this.isMoving = false;
+                        console.log("STOPPED");
+                }
+            } else if (this.targetCoords.y) {
+                this.y += this.movingDirection * SPEED;
+                console.log("MOVING");
+                if (
+                    (this.movingDirection > 0 && this.y >= this.targetCoords.y) || 
+                    (this.movingDirection < 0 && this.y <= this.targetCoords.y )) {
+                        this.y = this.targetCoords.y;
+                        this.isMoving = false;
+                        console.log("STOPPED");
+                }
+            }
+        }
     }
+
+    moveToX(x: number) {
+        if (this.isMoving) {
+            return;
+        }
+        this.targetCoords = { x, y: null };
+        this.movingDirection = this.x - this.targetCoords.x > 0 ? -1 : 1;
+        this.isMoving = true;
+        console.log(this.targetCoords);
+        console.log({x: this.x, y: this.y});
+    }
+
+    moveToY(y: number) {
+        if (this.isMoving) {
+            return;
+        }
+        this.targetCoords = { x: null, y};
+        this.movingDirection = this.y - this.targetCoords.y > 0 ? -1 : 1;
+        this.isMoving = true;
+        console.log(this.targetCoords);
+        console.log({x: this.x, y: this.y});
+    }
+
+    adjustForCollisions(): void {}
 }
 
 class AnimatedSprite extends MoveableObject {
@@ -175,19 +218,12 @@ export class PlayerControlledSprite extends AnimatedSprite {
         super(scene, x, y, texture);
         this.scene = scene;
         this.movementCallback = movementCallback;
-        this.direction = DIRECTIONS.down;
         this.controls = {
             up: this.scene.input.keyboard.addKey('W'),
             down: this.scene.input.keyboard.addKey('S'),
             left: this.scene.input.keyboard.addKey('A'),
             right: this.scene.input.keyboard.addKey('D'),
         };
-        // scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
-        //this.setInteractive();
-        scene.physics.add.collider(this, scene.level.moveable, (obj1, obj2) => {
-            let moveable : MoveableObject = obj2 as MoveableObject;
-            moveable.direction = this.direction;
-        })
     }
 
     update() {
@@ -225,22 +261,12 @@ export class PlayerControlledSprite extends AnimatedSprite {
             this.movementCallback(this);
         }
     }
-
-    // toggleUI() {
-    //     if(this.scene.isPaused) {
-    //         this.pauseMenu.disableUI();
-    //         this.scene.isPaused = false;
-    //     }
-    //     else {
-    //         this.pauseMenu = new StartUI(this.scene, 600, 300);
-    //         this.scene.isPaused = true;
-    //     }
-    // }
 }
 
 export class Player extends PlayerControlledSprite {
     constructor(scene: CycleScene, x: number, y: number, movementCallback: CallbackFunction) {
         super(scene, x, y, 'playerSprite', movementCallback);
+        scene.physics.add.collider(this, scene.level.moveable, onCollide);
     }
 
     update() {
@@ -251,27 +277,6 @@ export class Player extends PlayerControlledSprite {
 export class Mouse extends PlayerControlledSprite {
     constructor(scene: CycleScene, x: number, y: number, movementCallback: CallbackFunction) {
         super(scene, x, y, 'mouseSprite', movementCallback);
-        scene.physics.add.collider(this, scene.level.moveable, 
-            (obj1, obj2) => {
-                console.log("MOUSE COLLISION");
-                let player : Player = obj1 as Player;
-                let moveable : MoveableObject = obj2 as MoveableObject;
-                switch(player.direction) {
-                    case DIRECTIONS.down:
-                    case DIRECTIONS.up:
-                        moveable.setVelocityY(0);
-                        player.setVelocityY(0);
-                        break;
-                    case DIRECTIONS.right:
-                    case DIRECTIONS.left:
-                        moveable.setVelocityX(0);
-                        player.setVelocityX(0);
-                        break;
-                }
-            }, (sprite) => {
-                return true;
-            }, this
-        );
     }
 
     update() {
@@ -293,14 +298,6 @@ export class RemoteControlledSprite extends AnimatedSprite {
 export class Cat extends RemoteControlledSprite {
     constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'catSprite');
-        scene.physics.add.collider(this, scene.level.moveable, 
-            (obj1, obj2) => {
-                console.log("CAT COLLISION");
-                let remote : RemoteControlledSprite = obj1 as RemoteControlledSprite;
-                let moveable : MoveableObject = obj2 as MoveableObject;
-                remote.adjustToCurrentBlock();
-            }
-        );
     }
 
     update() {
@@ -311,33 +308,61 @@ export class Cat extends RemoteControlledSprite {
 export class Monster extends RemoteControlledSprite {
     constructor(scene: CycleScene, x: number, y: number) {
         super(scene, x, y, 'monsterSprite');
-        scene.physics.add.collider(this, scene.level.moveable, 
-            (obj1, obj2) => {
-                console.log("MONSTER COLLISION");
-                // let remote : RemoteControlledSprite = obj1 as RemoteControlledSprite;
-                // let moveable : MoveableObject = obj2 as MoveableObject;
-
-                // switch(remote.direction) {
-                //     case DIRECTIONS.down:
-                //         moveable.y = remote.y + config.BLOCK_SIZE;
-                //         break;
-                //     case DIRECTIONS.up:
-                //         moveable.y = remote.y - config.BLOCK_SIZE;
-                //         break;
-                //     case DIRECTIONS.right:
-                //         moveable.x = remote.x + config.BLOCK_SIZE;
-                //         break;
-                //     case DIRECTIONS.left:
-                //         moveable.x = remote.x - config.BLOCK_SIZE;
-                //         break;
-                // }
-            }, (sprite) => {
-                return true;
-            }
-        );
+        scene.physics.add.collider(this, scene.level.moveable, onCollide);
     }
 
     update() {
         super.update();
     }
+}
+
+let onCollide = (obj1, obj2) => {
+    let player : AbstractSprite = obj1 as AbstractSprite;
+    let moveable : PushableObject = obj2 as PushableObject;
+    let scene : CycleScene = player.scene as CycleScene;
+    if (moveable.isMoving) {
+        return;
+    }
+    switch (player.direction) {
+        case DIRECTIONS.up:
+            //moveable.y -= config.BLOCK_SIZE;
+            if (!scene.level.isBlockPassable(moveable.block.x, moveable.block.y - 1)) {
+                console.log("UNPASSABLE");
+                return;
+            }
+            scene.level.clearTile(moveable.block.x, moveable.block.y);
+            scene.level.setTile(moveable.block.x, moveable.block.y - 1);
+            moveable.moveToY(moveable.y - config.BLOCK_SIZE);
+            break;
+        case DIRECTIONS.down:
+            //moveable.y += config.BLOCK_SIZE;
+            if (!scene.level.isBlockPassable(moveable.block.x, moveable.block.y + 1)) {
+                console.log("UNPASSABLE");
+                return;
+            }
+            scene.level.clearTile(moveable.block.x, moveable.block.y);
+            scene.level.setTile(moveable.block.x, moveable.block.y + 1);
+            moveable.moveToY(moveable.y + config.BLOCK_SIZE);
+            break;
+        case DIRECTIONS.left:
+            //moveable.x -= config.BLOCK_SIZE;
+            if (!scene.level.isBlockPassable(moveable.block.x - 1, moveable.block.y)) {
+                console.log("UNPASSABLE");
+                return;
+            }
+            scene.level.clearTile(moveable.block.x, moveable.block.y);
+            scene.level.setTile(moveable.block.x - 1, moveable.block.y);
+            moveable.moveToX(moveable.x - config.BLOCK_SIZE);
+            break;
+        case DIRECTIONS.right:
+            //moveable.x += config.BLOCK_SIZE;
+            if (!scene.level.isBlockPassable(moveable.block.x + 1, moveable.block.y)) {
+                console.log("UNPASSABLE");
+                return;
+            }
+            scene.level.clearTile(moveable.block.x, moveable.block.y);
+            scene.level.setTile(moveable.block.x + 1, moveable.block.y);
+            moveable.moveToX(moveable.x + config.BLOCK_SIZE);
+            break;
+    };
 }

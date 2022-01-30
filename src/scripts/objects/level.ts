@@ -2,7 +2,7 @@ import 'phaser';
 import config from '../config';
 import { LevelConfig } from '../data/levels';
 import CycleScene from '../scenes/cycleScene';
-import { StaticObject, PushableObject } from './sprites';
+import { StaticObject, PushableObject, Mouse } from './sprites';
 
 export default class Level extends Phaser.GameObjects.GameObject {
 	levelConfig: LevelConfig;
@@ -43,6 +43,10 @@ export default class Level extends Phaser.GameObjects.GameObject {
 		this.levelConfig.tilemap[y][x] = ' ';
 	}
 
+	setTile(x: number, y: number) {
+		this.levelConfig.tilemap[y][x] = '#';
+	}
+
 	isBlockPassable(x: number, y: number) : boolean {
 		return x >= 0 && y >= 0 && x < this.levelConfig.blocksX && y < this.levelConfig.blocksY && this.getTile(x, y) === ' ';
 	}
@@ -53,14 +57,6 @@ export default class Level extends Phaser.GameObjects.GameObject {
 
 	isBlockBreakable(x: number, y: number) : boolean {
 		return this.getTile(x, y) === '#';
-	}
-
-	bringToTop() {
-		this.blocks.children.each((block) => {
-		}, this);
-		this.moveable.children.each((block) => {
-			block.update();
-		}, this);
 	}
 
 	update() {
