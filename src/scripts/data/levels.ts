@@ -3,7 +3,8 @@ export type LevelConfig = {
 	blocksX: number,
 	blocksY: number,
 	blockAsset: string,
-	breakableAsset: string
+	breakableAsset: string,
+	exitAsset: string
 }
 
 export default {
@@ -21,7 +22,7 @@ export default {
 			["*", "*", " ", " ", " ", "*", " ", "*", " ", " ", " ", " ", " ", " ", "*"],
 			["*", " ", " ", " ", " ", " ", " ", "*", " ", " ", "#", " ", " ", " ", "*"],
 			["*", "*", " ", " ", " ", " ", " ", "*", " ", " ", " ", " ", " ", "*", "*"],
-			["*", " ", " ", " ", " ", " ", " ", "*", " ", " ", " ", " ", " ", "*", "*"],
+			["E", " ", " ", " ", " ", " ", " ", "*", " ", " ", " ", " ", " ", "*", "*"],
 			["*", "*", " ", "*", " ", "*", " ", "*", " ", "*", " ", "*", " ", "*", "*"],
 			["*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*", "*"],
 		],
@@ -31,6 +32,7 @@ export default {
 		player2Start: {x: 13, y: 1},
 		blockAsset: 'block',
 		breakableAsset: 'breakable',
+		exitAsset: 'door',
 		nextLevel: 'level2'
 	}
 }

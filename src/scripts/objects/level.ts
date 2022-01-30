@@ -8,6 +8,7 @@ export default class Level extends Phaser.GameObjects.GameObject {
 	levelConfig: LevelConfig;
 	blocks: Phaser.Physics.Arcade.Group;
 	moveable: Phaser.Physics.Arcade.Group;
+	exit: Phaser.Physics.Arcade.Sprite;
 
 	constructor(scene : CycleScene, levelConfig : LevelConfig) {
 		super(scene, 'level');
@@ -20,16 +21,21 @@ export default class Level extends Phaser.GameObjects.GameObject {
 
 		for (let y = 0; y < this.levelConfig.blocksY; y++) {
 			for (let x = 0; x < this.levelConfig.blocksX; x++) {
-				if (this.levelConfig.tilemap[y][x] == "*") {
+				if (this.levelConfig.tilemap[y][x] === "*") {
 					let block = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.blockAsset);
 					block.depth = y * config.BLOCK_SIZE;
 					this.blocks.add(block);
-				} else if (this.levelConfig.tilemap[y][x] == "#") {
+				} else if (this.levelConfig.tilemap[y][x] === "#") {
 					let block = new PushableObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.breakableAsset);
 					block.depth = y * config.BLOCK_SIZE;
 					this.moveable.add(block);
 					block.setDrag(2000, 2000);
 					this.scene.physics.add.collider(block, this.blocks);
+				} else if (this.levelConfig.tilemap[y][x] === "E") {
+					let block = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.exitAsset);
+					block.depth = y * config.BLOCK_SIZE;
+					this.blocks.add(block);
+					this.exit = block;
 				}
 			}
 		}

@@ -129,9 +129,47 @@ export default class CycleScene extends AbstractPausableScene {
                         if (this.cycle === 'day') {
                             this.player = new Player(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Cat(this, levels.level1.player2Start.x * config.BLOCK_SIZE, levels.level1.player2Start.y * config.BLOCK_SIZE);
+                            this.physics.add.collider(this.player, this.remote, () => {
+                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You got the key...\nbut night\nsnuffs out\nthe light of day.", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+                                text.depth = 999;
+                                text.setOrigin(0.5, 0.5);
+                                setTimeout(() => {
+                                    this.state = "COMPLETED";
+                                }, 5000);
+                            });
+                            this.physics.add.collider(this.remote, this.level.exit, () => {
+                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You failed...\na night of terror awaits", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+                                text.depth = 999;
+                                text.setOrigin(0.5, 0.5);
+                                setTimeout(() => {
+                                    this.state = "FAILED";
+                                }, 5000);
+                            });
                         } else if (this.cycle === 'night') {
                             this.player = new Mouse(this, levels[this.levelId].player2Start.x * config.BLOCK_SIZE, levels[this.levelId].player2Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
                             this.remote = new Monster(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE);
+                            this.physics.add.collider(this.remote, this.player, () => {
+                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You were consumed\nby the darkness...\nmorning comes.", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+                                text.depth = 999;
+                                text.setOrigin(0.5, 0.5);
+                                this.cameras.main.zoomTo(1.0);
+                                this.cameras.main.stopFollow();
+                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+                                setTimeout(() => {
+                                    this.state = "FAILED";
+                                }, 5000);
+                            });
+                            this.physics.add.collider(this.player, this.level.exit, () => {
+                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You escaped the room, \nbut tomorrow \nbrings more of the same!", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+                                text.depth = 999;
+                                text.setOrigin(0.5, 0.5);
+                                this.cameras.main.zoomTo(1.0);
+                                this.cameras.main.stopFollow();
+                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+                                setTimeout(() => {
+                                    this.state = "COMPLETED";
+                                }, 5000);
+                            });
                             this.cameras.main.startFollow(this.player);
                             this.cameras.main.zoom = 3.0;
                         }
@@ -163,7 +201,7 @@ export default class CycleScene extends AbstractPausableScene {
             this.player.update();
             this.remote.update();
             this.level.update();
-        } else if (this.state === 'COMPLETE') {
+        } else if (this.state === 'COMPLETE' || this.state === 'FAIL') {
             if (this.cycle === 'day') {
                 this.scene.start('CycleScene', { cycle: 'night' });
             } else {
