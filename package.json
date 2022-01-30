@@ -40,6 +40,7 @@
   "license": "MIT",
   "dependencies": {
     "phaser": "^3.55.2",
+    "phaser3-gamepad-plugin": "^1.6.0",
     "websocket": "^1.0.34"
   },
   "devDependencies": {

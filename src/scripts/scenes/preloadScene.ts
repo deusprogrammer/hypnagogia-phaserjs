@@ -1,4 +1,5 @@
 import config from "../config";
+import GamePadPlugin from 'phaser3-gamepad-plugin';
 
 let urlParams = new URLSearchParams(window.location.search);
 let cycle = urlParams.get('cycle');

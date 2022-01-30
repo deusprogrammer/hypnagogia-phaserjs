@@ -224,6 +224,7 @@ export class PlayerControlledSprite extends AnimatedSprite {
             left: this.scene.input.keyboard.addKey('A'),
             right: this.scene.input.keyboard.addKey('D'),
         };
+        console.log(this.scene.input.gamepad);
     }
 
     update() {
