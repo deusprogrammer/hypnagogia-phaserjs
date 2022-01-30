@@ -2,7 +2,6 @@ import 'phaser'
 import {createPlayerAnimation} from '../helpers/animationHelper';
 import CycleScene from '../scenes/cycleScene';
 import config from '../config';
-import levels from '../data/levels';
 
 type CallbackFunction = (player: PlayerControlledSprite) => void;
 type Coord = {x: number, y: number};
@@ -31,6 +30,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
 
         this.setOrigin(0,0);
         this.setCollideWorldBounds(true);
+        this.setBounce(0, 0);
         this.body.checkCollision = {
             none: false,
             up: true,
@@ -187,10 +187,10 @@ export class PlayerControlledSprite extends AnimatedSprite {
 
     create() {
         let scene : CycleScene = this.scene as CycleScene;
-        scene.physics.add.collider(this, scene.level.moveable, (sprite) => {
-            let moveable : MoveableObject = sprite as MoveableObject;
-            moveable.direction = this.direction;
-        })
+        // scene.physics.add.collider(this, scene.level.moveable, (sprite) => {
+        //     let moveable : MoveableObject = sprite as MoveableObject;
+        //     moveable.direction = this.direction;
+        // })
     }
 
     update() {
@@ -268,7 +268,6 @@ export class RemoteControlledSprite extends AnimatedSprite {
 
     update() {
         super.update();
-        console.log("UPDATING REMOTE OBJECT!");
     }
 }
 

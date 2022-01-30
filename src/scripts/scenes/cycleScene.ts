@@ -3,6 +3,7 @@ import { w3cwebsocket as W3CWebSocket } from "websocket";
 import { AbstractPausableScene } from './abstractPausableScene';
 import Level from '../objects/level';
 import levels from '../data/levels';
+import config from '../config';
 
 let urlParams: URLSearchParams = new URLSearchParams(window.location.search);
 let sessionId: string = urlParams.get('sessionId') || '';
@@ -27,10 +28,12 @@ export default class CycleScene extends AbstractPausableScene {
     ws: WebSocket;
     state: string;
     cycle: string;
+    levelId: string;
 
     constructor() {
         super({ key: 'CycleScene' });
         this.state = 'WAITING';
+        this.levelId = 'level1';
     }
 
     onPlayerMove(player: PlayerControlledSprite, ws: WebSocket) {
@@ -108,16 +111,17 @@ export default class CycleScene extends AbstractPausableScene {
             this.ws.onmessage = (message: MessageEvent) => {
                 let event : WSEvent = JSON.parse(message.data);
                 console.log('EVENT: ' + JSON.stringify(event, null, 5));
+                this.game.scale.setGameSize(levels[this.levelId].blocksX * config.BLOCK_SIZE, levels[this.levelId].blocksY * config.BLOCK_SIZE);
                 switch (event.type) {
                     case 'READY':
                         console.log('OTHER PLAYER READY');
                         this.state = 'PLAYING';
                         if (this.cycle === 'day') {
-                            this.player = new Player(this, 0, 0, (player) => { this.onPlayerMove(player, ws) });
-                            this.remote = new Cat(this, 100, 100);
+                            this.player = new Player(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
+                            this.remote = new Cat(this, levels.level1.player2Start.x * config.BLOCK_SIZE, levels.level1.player2Start.y * config.BLOCK_SIZE);
                         } else if (this.cycle === 'night') {
-                            this.player = new Mouse(this, 100, 100, (player) => { this.onPlayerMove(player, ws) });
-                            this.remote = new Monster(this, 0, 0);
+                            this.player = new Mouse(this, levels[this.levelId].player2Start.x * config.BLOCK_SIZE, levels[this.levelId].player2Start.y * config.BLOCK_SIZE, (player) => { this.onPlayerMove(player, ws) });
+                            this.remote = new Monster(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE);
                             this.cameras.main.startFollow(this.player);
                             this.cameras.main.zoom = 3.0;
                         }
