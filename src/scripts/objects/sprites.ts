@@ -47,6 +47,7 @@ export class AbstractSprite extends Phaser.Physics.Arcade.Sprite {
 class MoveableObject extends AbstractSprite {
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
+        this.setInteractive();
     }
 
     update() {
@@ -59,13 +60,14 @@ class MoveableObject extends AbstractSprite {
         this.adjustForCollisions();
     }
 
-    adjustForCollisions() {
+    adjustForCollisions() : void {
         let scene = this.scene as CycleScene;
         let collided = this.scene.physics.collide(this, scene.level.blocks) || scene.physics.collide(this, scene.level.moveable) || scene.physics.collide(this, scene.player)  || scene.physics.collide(this, scene.remote);
+        let overlapped = this.scene.physics.overlap(this, scene.level.blocks) || scene.physics.overlap(this, scene.level.moveable) || scene.physics.overlap(this, scene.player)  || scene.physics.overlap(this, scene.remote);
         let adjacentBlock = this.getFacingBlock();
 
         // Check for obstacle collision
-        if (collided && scene.level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
+        if (collided || overlapped && scene.level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
             let delta = this.findDeltaFromPassing();
 
             let distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
@@ -120,10 +122,26 @@ class MoveableObject extends AbstractSprite {
     }
 }
 
+export class StaticObject extends AbstractSprite {
+    constructor(scene: CycleScene, x: number, y: number, texture: string) {
+        super(scene, x, y, texture);
+        this.setPushable(false);
+    }
+
+    update() {
+        super.update();
+    }
+}
+
 export class PushableObject extends MoveableObject {
     constructor(scene: CycleScene, x: number, y: number, texture: string) {
         super(scene, x, y, texture);
         this.setPushable(true);
+    }
+
+    create() {
+        let scene : CycleScene = this.scene as CycleScene;
+        scene.physics.add.collider(this, scene.level.blocks);
     }
 
     update() {
@@ -139,16 +157,22 @@ export class PushableObject extends MoveableObject {
             this.direction = DIRECTIONS.left;
         }
     }
-}
 
-export class StaticObject extends AbstractSprite {
-    constructor(scene: CycleScene, x: number, y: number, texture: string) {
-        super(scene, x, y, texture);
-        this.setPushable(false);
-    }
+    adjustForCollisions(): void {
+        let scene = this.scene as CycleScene;
+        let collided = this.scene.physics.collide(this, scene.level.blocks) || scene.physics.collide(this, scene.level.moveable);
+        let adjacentBlock = this.getFacingBlock();
 
-    update() {
-        super.update();
+        // Check for obstacle collision
+        if (collided && scene.level.isBlockPassable(adjacentBlock.x, adjacentBlock.y)) {
+            let delta = this.findDeltaFromPassing();
+
+            let distance = Math.sqrt(Math.pow(delta.x, 2) + Math.pow(delta.y, 2));
+
+            if (distance <= config.ALLOWED_DISTANCE) {
+                this.adjustToCurrentBlock();
+            }
+        }
     }
 }
 
@@ -171,7 +195,6 @@ export class PlayerControlledSprite extends AnimatedSprite {
     // pauseMenu;
     controls: PlayerControls;
     movementCallback: CallbackFunction;
-    direction: string;
 
     constructor(scene: CycleScene, x: number, y: number, texture: string, movementCallback: CallbackFunction) {
         super(scene, x, y, texture);
@@ -185,7 +208,7 @@ export class PlayerControlledSprite extends AnimatedSprite {
             right: this.scene.input.keyboard.addKey('D'),
         };
         // scene.input.keyboard.on('keydown-' + 'P', this.toggleUI);
-        this.setInteractive();
+        //this.setInteractive();
     }
 
     update() {
@@ -263,6 +286,7 @@ export class RemoteControlledSprite extends AnimatedSprite {
 
     update() {
         super.update();
+        console.log("UPDATING REMOTE OBJECT!");
     }
 }
 

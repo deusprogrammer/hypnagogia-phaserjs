@@ -60,15 +60,18 @@ export default class CycleScene extends AbstractPausableScene {
     }
 
     create() {
+        let text : Phaser.GameObjects.Text;
         if (this.cycle === 'day') {
             this.cameras.main.setBackgroundColor('#FFFFFF');
+            text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Waking Up...", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+            text.setOrigin(0.5, 0.5);
         } else if (this.cycle === 'night') {
             this.cameras.main.setBackgroundColor('#000000');
+            text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Falling Asleep...Sweet Dreams", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
+            text.setOrigin(0.5, 0.5);
         }
 
         let ws : WebSocket;
-        let text : Phaser.GameObjects.Text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "Falling Asleep...Sweet Dreams", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
-        text.setOrigin(0.5, 0.5);
         try {
             let interval;
             ws = this.ws = new W3CWebSocket('ws://localhost:8081');
