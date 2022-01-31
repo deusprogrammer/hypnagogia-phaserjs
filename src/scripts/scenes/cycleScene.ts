@@ -231,12 +231,7 @@ export default class CycleScene extends AbstractPausableScene {
 
                             // Day time lose
                             this.physics.add.collider(this.remote, this.level.exit, () => {
-                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You failed...\na night of terror awaits", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
-                                text.depth = 999;
-                                text.setOrigin(0.5, 0.5);
-                                this.cameras.main.zoomTo(1.0);
-                                this.cameras.main.stopFollow();
-                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+                                this.onLose();
                                 ws.send(JSON.stringify({
                                     type: 'UPDATE',
                                     sessionId,
@@ -267,7 +262,7 @@ export default class CycleScene extends AbstractPausableScene {
                             
                             // Night time lose
                             this.physics.add.collider(this.remote, this.player, () => {
-                                this.onWon();
+                                this.onLose();
                                 ws.send(JSON.stringify({
                                     type: 'UPDATE',
                                     sessionId,
@@ -288,12 +283,7 @@ export default class CycleScene extends AbstractPausableScene {
 
                             // Night time win
                             this.physics.add.collider(this.player, this.level.exit, () => {
-                                let text = this.add.text(0.5 * this.game.scale.width, 0.5 * this.game.scale.height, "You escaped the room, \nbut tomorrow \nbrings more of the same!", { fontSize: "30pt", stroke: "#000", strokeThickness: 5 });
-                                text.depth = 999;
-                                text.setOrigin(0.5, 0.5);
-                                this.cameras.main.zoomTo(1.0);
-                                this.cameras.main.stopFollow();
-                                this.cameras.main.centerOn(0.5 * this.game.scale.width, 0.5 * this.game.scale.height);
+                                this.onWon();
                                 ws.send(JSON.stringify({
                                     type: 'UPDATE',
                                     sessionId,
