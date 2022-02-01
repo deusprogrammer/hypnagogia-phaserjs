@@ -209,7 +209,7 @@ export default class CycleScene extends AbstractPausableScene {
                             this.remote = new Cat(this, levels.level1.player2Start.x * config.BLOCK_SIZE, levels.level1.player2Start.y * config.BLOCK_SIZE);
                             
                             // Day time win
-                            this.physics.add.collider(this.player, this.remote, () => {
+                            this.physics.add.collider(this.player.hitBox, this.remote.hitBox, () => {
                                 this.onWon();
                                 ws.send(JSON.stringify({
                                     type: 'UPDATE',
@@ -261,7 +261,7 @@ export default class CycleScene extends AbstractPausableScene {
                             this.remote = new Monster(this, levels[this.levelId].player1Start.x * config.BLOCK_SIZE, levels[this.levelId].player1Start.y * config.BLOCK_SIZE);
                             
                             // Night time lose
-                            this.physics.add.collider(this.remote, this.player, () => {
+                            this.physics.add.collider(this.remote.hitBox, this.player.hitBox, () => {
                                 this.onLose();
                                 ws.send(JSON.stringify({
                                     type: 'UPDATE',

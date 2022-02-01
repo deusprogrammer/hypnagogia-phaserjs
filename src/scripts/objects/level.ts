@@ -2,14 +2,14 @@ import 'phaser';
 import config from '../config';
 import { assetMap, AssetMapEntry, LevelConfig } from '../data/levels';
 import CycleScene from '../scenes/cycleScene';
-import { StaticObject, PushableObject, Mouse, AbstractSprite } from './sprites';
+import { PushableObject } from './sprites';
 
 export default class Level extends Phaser.GameObjects.GameObject {
 	levelConfig: LevelConfig;
 	blocks: Phaser.Physics.Arcade.Group;
 	moveable: Phaser.Physics.Arcade.Group;
 	hidingSpots : Phaser.Physics.Arcade.Group;
-	floor: Phaser.Physics.Arcade.Group;
+	floor: Phaser.GameObjects.Group;
 	exit: Phaser.Physics.Arcade.Sprite;
 
 	constructor(scene : CycleScene, levelConfig : LevelConfig) {
@@ -18,7 +18,7 @@ export default class Level extends Phaser.GameObjects.GameObject {
 
 		scene.add.existing(this);
 
-		this.floor = this.scene.physics.add.group();
+		this.floor = this.scene.add.group();
 		this.blocks = this.scene.physics.add.group();
 		this.moveable = this.scene.physics.add.group();
 		this.hidingSpots = this.scene.physics.add.group();
@@ -26,35 +26,37 @@ export default class Level extends Phaser.GameObjects.GameObject {
 		for (let y = 0; y < this.levelConfig.blocksY; y++) {
 			for (let x = 0; x < this.levelConfig.blocksX; x++) {
 				// Draw floor
-				let floorBlock = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.floorAsset);
+				let floorBlock = this.scene.add.image(x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, this.levelConfig.floorAsset);
 				if (scene.cycle === 'night') {
 					floorBlock.tint = this.levelConfig.nightTint;
 				}
 				this.floor.add(floorBlock);
 
 				let asset : AssetMapEntry = assetMap[this.levelConfig.tilemap[y][x]];
-				let block : AbstractSprite;
+				let block : Phaser.Physics.Arcade.Sprite;
 				if (!asset) {
 					continue;
 				} else if (asset.canPush) {
 					block = new PushableObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
 					this.moveable.add(block);
 				} else if (asset.canHide) {
-					block = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
+					block = scene.physics.add.sprite(x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
 					if (scene.cycle === 'night') {
 						this.hidingSpots.add(block);
 					} else {
 						this.blocks.add(block);
 					}
 				} else if (asset.isExit && !this.exit) {
-					block = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
+					block = scene.physics.add.sprite(x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
 					this.exit = block;
 				} else {
-					block = new StaticObject(scene, x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
+					block = scene.physics.add.sprite(x * config.BLOCK_SIZE, y * config.BLOCK_SIZE, asset.name);
 					this.blocks.add(block);
 				}
 
 				block.depth = y * config.BLOCK_SIZE + 5;
+				block.setOrigin(0, 0);
+				block.setPushable(false);
 
 				if (scene.cycle === 'night') {
 					block.tint = this.levelConfig.nightTint;
