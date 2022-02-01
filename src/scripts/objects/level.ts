@@ -30,6 +30,7 @@ export default class Level extends Phaser.GameObjects.GameObject {
 				if (scene.cycle === 'night') {
 					floorBlock.tint = this.levelConfig.nightTint;
 				}
+				floorBlock.setOrigin(0, 0);
 				this.floor.add(floorBlock);
 
 				let asset : AssetMapEntry = assetMap[this.levelConfig.tilemap[y][x]];
