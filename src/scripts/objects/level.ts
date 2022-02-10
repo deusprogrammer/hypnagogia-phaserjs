@@ -16,8 +16,6 @@ export default class Level extends Phaser.GameObjects.GameObject {
 		super(scene, 'level');
 		this.levelConfig = levelConfig;
 
-		scene.add.existing(this);
-
 		this.floor = this.scene.add.group();
 		this.blocks = this.scene.physics.add.group();
 		this.moveable = this.scene.physics.add.group();
@@ -56,6 +54,7 @@ export default class Level extends Phaser.GameObjects.GameObject {
 				}
 
 				block.depth = y * config.BLOCK_SIZE + 5;
+				block.setName(`${asset.name}[${x}][${y}]`);
 				block.setOrigin(0, 0);
 				block.setPushable(false);
 

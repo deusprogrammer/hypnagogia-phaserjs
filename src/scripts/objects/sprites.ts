@@ -236,6 +236,8 @@ export class PlayerControlledSprite extends AnimatedSprite {
             left: this.scene.input.keyboard.addKey('A'),
             right: this.scene.input.keyboard.addKey('D'),
         };
+
+        console.log("GAMEPAD: " + this.scene.input.gamepad);
     }
 
     update() {
@@ -363,6 +365,7 @@ let onCollide = (obj1, obj2) => {
     let bodies : Body[] = scene.physics.overlapRect((adjacentBlock.x * config.BLOCK_SIZE) + 5, (adjacentBlock.y * config.BLOCK_SIZE) + 5, config.BLOCK_SIZE - 10, config.BLOCK_SIZE - 10) as Body[];
     console.log("BODIES:   " + bodies);
     console.log("ADJACENT: " + adjacentBlock.x + ", " + adjacentBlock.y);
+    console.log("NAME:     " + moveable.name);
     switch (player.direction) {
         case DIRECTIONS.up:
             if (!scene.level.isBlockPassable(moveable.block.x, moveable.block.y - 1) || bodies.length > 0) {
